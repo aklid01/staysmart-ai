@@ -10,6 +10,9 @@ from staysmart.domain.errors import ProviderError
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATASET_PATH = PROJECT_ROOT / "data" / "hotels" / "v1" / "hotels.json"
+DEFAULT_RAG_CORPUS_PATH = PROJECT_ROOT / "data" / "knowledge" / "v1"
+DEFAULT_RAG_INDEX_PATH = PROJECT_ROOT / "data" / "rag" / "index"
+DEFAULT_RAG_MODEL = "BAAI/bge-small-en-v1.5"
 
 
 @dataclass(frozen=True)
@@ -22,6 +25,9 @@ class Settings:
     http_host: str = "127.0.0.1"
     http_port: int = 8000
     cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173")
+    rag_corpus_path: Path = DEFAULT_RAG_CORPUS_PATH
+    rag_index_path: Path = DEFAULT_RAG_INDEX_PATH
+    rag_model: str = DEFAULT_RAG_MODEL
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
@@ -67,6 +73,14 @@ class Settings:
             if origin.strip()
         )
 
+        rag_corpus_raw = source.get("STAYSMART_RAG_CORPUS_PATH", "")
+        rag_corpus_path = Path(rag_corpus_raw) if rag_corpus_raw else DEFAULT_RAG_CORPUS_PATH
+        rag_index_raw = source.get("STAYSMART_RAG_INDEX_PATH", "")
+        rag_index_path = Path(rag_index_raw) if rag_index_raw else DEFAULT_RAG_INDEX_PATH
+        rag_model = source.get("STAYSMART_RAG_MODEL", DEFAULT_RAG_MODEL).strip()
+        if not rag_model:
+            raise ProviderError("STAYSMART_RAG_MODEL must not be empty")
+
         return cls(
             hotel_provider=provider,
             dataset_path=dataset_path,
@@ -76,6 +90,9 @@ class Settings:
             http_host=http_host,
             http_port=http_port,
             cors_origins=cors_origins,
+            rag_corpus_path=rag_corpus_path,
+            rag_index_path=rag_index_path,
+            rag_model=rag_model,
         )
 
 
