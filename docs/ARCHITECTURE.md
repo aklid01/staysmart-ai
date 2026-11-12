@@ -2,25 +2,25 @@
 
 ## Implementation status
 
-Read this first. Phases 0 and 1 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
+Read this first. Phases 0 through 3 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
 
 | Component | Phase | Status |
 | --- | --- | --- |
 | Packaging, uv environment, configuration surface, documentation scaffold | 0 | Implemented |
 | Domain models, config loader, mock dataset, inventory, provider | 1 | Implemented |
 | Service layer, MCP server and five tools | 2 | Implemented |
-| Starlette app and MCP client | 3 | Not yet implemented |
+| Starlette app and MCP client | 3 | Implemented |
 | RAG ingestion, indexing and retrieval | 4 | Not yet implemented |
 | LLM agent orchestration | 5 | Not yet implemented |
 | TypeScript frontend | 6 | Not yet implemented |
 
 ## Layering
 
-Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app will host an MCP client and serve the frontend. RAG is a separate retrieval channel for descriptive context and will never supply prices or availability. The LLM agent will sit above the tools through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
+Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG is a separate retrieval channel for descriptive context and will never supply prices or availability. The LLM agent will sit above the tools through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
 
 ```mermaid
 flowchart TD
-  FE["Frontend TS - Phase 6, planned"] -->|HTTP| APP["Starlette app + MCP client - Phase 3, planned"]
+  FE["Frontend TS - Phase 6, planned"] -->|HTTP| APP["Starlette app + MCP client - implemented"]
   APP -->|"stdio tool calls"| TOOLS["MCP tools - implemented"]
   AGENT["LLM agent - Phase 5, planned"] --> TOOLS
   RAG["RAG retrieval - Phase 4, planned"] -.->|"context only"| AGENT
@@ -54,6 +54,14 @@ flowchart TD
 | `src/staysmart/mcp_server/__main__.py` | `python -m staysmart.mcp_server` stdio entrypoint. |
 | `scripts/demo_mcp.py` | In-process MCP client runs the contract scenarios and writes `artifacts/mcp_demo.json`. |
 | `tests/phase2/` | Behavioral contract, 47 pytest tests (service, in-process tool calls, real stdio subprocess, snapshot), spec-authored golden artifact. |
+| `src/staysmart/config.py` (Phase 3 additions) | `Settings` gains `http_host`, `http_port` and `cors_origins` from `STAYSMART_HTTP_HOST`, `STAYSMART_HTTP_PORT`, `STAYSMART_CORS_ORIGINS`, validated like the existing settings. |
+| `src/staysmart/app/mcp_client.py` | Connector seam: `McpSession` and `McpConnector` protocols, `StdioMcpConnector` launching `python -m staysmart.mcp_server` as a stdio subprocess, `InProcessMcpConnector` for tests and demos, and a session adapter raising `ToolFailureError` on `is_error` results. |
+| `src/staysmart/app/errors.py` | `ApiError` with the `{"error": {...}}` envelope, tool-failure classifier mapping provider message fragments to 404/400/502, and handlers for validation errors, malformed JSON, unknown routes and unhandled exceptions. |
+| `src/staysmart/app/routes.py` | Request models mirroring the tool inputs (`extra="forbid"`, `ge=1` on guests and rooms) and the seven endpoints. Each data endpoint performs exactly one MCP tool call and returns the payload verbatim; `/api/chat` validates the request and returns 501 `agent_not_available`. |
+| `src/staysmart/app/main.py` | `create_app(settings, connector=None)` wiring the lifespan (one long-lived MCP session), CORS middleware, routes and error handlers. |
+| `src/staysmart/app/__main__.py` | `python -m staysmart.app` uvicorn entrypoint. |
+| `scripts/demo_api.py` | Launches a real uvicorn server on an ephemeral port with the stdio connector, calls every endpoint and writes `artifacts/api_demo.json`. |
+| `tests/phase3/` | Behavioral contract, 33 pytest tests (health, endpoints, error mapping, CORS, real stdio transport, snapshot), spec-authored golden artifact. |
 
 ### Search flow as implemented
 
@@ -76,7 +84,6 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 
 | Component | Responsibility |
 | --- | --- |
-| `src/staysmart/app/` | Starlette endpoints, request validation, exception handling, health status, MCP client. |
 | `src/staysmart/rag/` | Document ingestion, chunking, FastEmbed embeddings, local vector index, retrieval, source attribution. |
 | `src/staysmart/agent/` | Natural-language interpretation, tool selection, sequential tool calls, grounded response generation, safeguards. |
 | `frontend/` | Presentation and user interaction only. |
@@ -87,10 +94,11 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 - A validated `HotelSearchQuery` exists before any hotel search operation.
 - No hotel fact, price or availability value is invented. Missing availability is reported as missing.
 - Structured hotel search and RAG retrieval stay separate. Live prices and availability never come from RAG documents.
-- MCP communication over stdio stays separate from the frontend HTTP interface.
+- MCP communication over stdio stays separate from the frontend HTTP interface: the browser only ever talks to the Starlette layer, and each HTTP data operation maps to one MCP tool call.
+- The HTTP layer holds no hotel business logic: request models mirror tool inputs, and success payloads pass through unchanged.
 - The provider interface is replaceable. A real connectivity provider can implement the same Protocol later.
 - No reservations, payments or booking transactions.
 
-## Data flow (planned)
+## Data flow (as of Phase 3)
 
-A user message will be interpreted into a validated structured query. The agent will choose MCP tools, call them over stdio, and receive structured results. For comparison and recommendations, the service layer will combine provider facts with retrieved policy context. The Starlette layer will return structured JSON to the frontend, which renders result cards, comparison views, details, policy sources, and loading or error states.
+HTTP requests arrive at the Starlette layer, where request models validate shape (`extra="forbid"`, positive guests and rooms). Each data endpoint forwards its arguments through one MCP tool call over the stdio session and returns the tool payload verbatim. Tool failures carry the provider message, which the HTTP classifier maps to 404, 400 or 502; MCP session failures become 503. In Phase 5 a user message will additionally be interpreted into validated structured queries by the LLM agent, which will choose MCP tools, call them over stdio, and combine provider facts with retrieved policy context before generating a grounded response. The frontend (Phase 6) will render result cards, comparison views, details, policy sources, and loading or error states from this JSON.

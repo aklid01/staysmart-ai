@@ -1,6 +1,6 @@
 # MCP server, tools and communication
 
-Status: implemented (Phase 2). Everything below describes behavior that exists in `src/staysmart/mcp_server/` and is covered by `tests/phase2/`.
+Status: implemented (Phases 2 and 3). The server sections describe behavior that exists in `src/staysmart/mcp_server/` and is covered by `tests/phase2/`; the client integration section describes `src/staysmart/app/mcp_client.py` and is covered by `tests/phase3/`.
 
 ## Server
 
@@ -18,7 +18,17 @@ The server runs over local stdio:
 uv run python -m staysmart.mcp_server
 ```
 
-`src/staysmart/mcp_server/__main__.py` builds `Settings.from_env()`, the provider via `get_provider(settings)` (only `mock` exists), the server, and calls `server.run("stdio")`. An unsupported `HOTEL_PROVIDER` fails at startup with a `ProviderError`. MCP communication stays fully separate from any frontend HTTP interface; the Starlette layer (Phase 3) will host its own MCP client and speak to this server over stdio.
+`src/staysmart/mcp_server/__main__.py` builds `Settings.from_env()`, the provider via `get_provider(settings)` (only `mock` exists), the server, and calls `server.run("stdio")`. An unsupported `HOTEL_PROVIDER` fails at startup with a `ProviderError`. MCP communication stays fully separate from any frontend HTTP interface; the Starlette app (Phase 3) hosts its own MCP client and speaks to this server over stdio.
+
+## HTTP application client integration (Phase 3)
+
+`src/staysmart/app/mcp_client.py` defines the client seam used by the Starlette layer:
+
+- `StdioMcpConnector` (production) launches the server as a stdio subprocess via `StdioServerParameters(command=sys.executable, args=["-m", "staysmart.mcp_server"], cwd=<project root>)` with `STAYSMART_LOG_LEVEL`, `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8` in the child environment.
+- `InProcessMcpConnector` wraps a built `MCPServer` instance with `Client(server=...)`; tests and demos use it to exercise the full protocol stack without spawning a process.
+- Both connectors return an async context manager yielding an `McpSession` with `list_tools()` (sorted names) and `call_tool(name, arguments)` (structured payload). A session raises `ToolFailureError(message)` on `is_error` results, stripping the SDK prefix `Error executing tool <name>: ` before the HTTP classifier maps the message.
+
+`create_app` enters the connector inside the Starlette lifespan, so the app holds exactly one long-lived MCP session for its lifetime and closes it on shutdown. `GET /api/health` pings the session with `list_tools()` and reports `connected: true` plus the five sorted tool names, or `degraded` with 503 when the ping fails. See [API.md](API.md) for the HTTP surface and [tests/phase3/CONTRACT.md](../tests/phase3/CONTRACT.md) for the pinned behavior.
 
 ## Tools
 
