@@ -8,7 +8,7 @@ Read this first. Phases 0 and 1 are implemented. Everything marked "not yet impl
 | --- | --- | --- |
 | Packaging, uv environment, configuration surface, documentation scaffold | 0 | Implemented |
 | Domain models, config loader, mock dataset, inventory, provider | 1 | Implemented |
-| Service layer, MCP server and five tools | 2 | Not yet implemented |
+| Service layer, MCP server and five tools | 2 | Implemented |
 | Starlette app and MCP client | 3 | Not yet implemented |
 | RAG ingestion, indexing and retrieval | 4 | Not yet implemented |
 | LLM agent orchestration | 5 | Not yet implemented |
@@ -16,15 +16,15 @@ Read this first. Phases 0 and 1 are implemented. Everything marked "not yet impl
 
 ## Layering
 
-Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. A thin service layer will derive `compare_hotels` and `get_hotel_policies` by composing provider operations, so neither is baked into the provider. MCP tools will own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app will host an MCP client and serve the frontend. RAG is a separate retrieval channel for descriptive context and will never supply prices or availability. The LLM agent will sit above the tools through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
+Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app will host an MCP client and serve the frontend. RAG is a separate retrieval channel for descriptive context and will never supply prices or availability. The LLM agent will sit above the tools through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
 
 ```mermaid
 flowchart TD
   FE["Frontend TS - Phase 6, planned"] -->|HTTP| APP["Starlette app + MCP client - Phase 3, planned"]
-  APP -->|"stdio tool calls"| TOOLS["MCP tools - Phase 2, planned"]
+  APP -->|"stdio tool calls"| TOOLS["MCP tools - implemented"]
   AGENT["LLM agent - Phase 5, planned"] --> TOOLS
   RAG["RAG retrieval - Phase 4, planned"] -.->|"context only"| AGENT
-  TOOLS --> SVC["Service layer - Phase 2, planned"]
+  TOOLS --> SVC["Service layer - implemented"]
   SVC --> PROTO["HotelProvider Protocol - implemented"]
   MOCK["MockHotelProvider - implemented"] -.->|implements| PROTO
   MOCK --> DATA["data/hotels/v1/hotels.json - implemented"]
@@ -46,6 +46,14 @@ flowchart TD
 | `data/hotels/v1/hotels.json` | 3 destinations, 10 hotels, 13 room types, varied ratings (6.8 to 9.4), base rates (55 to 340 USD), four cancellation policy types, sold-out overrides and a blackout date. Anchor date `2026-11-01`, 365-day window. |
 | `scripts/demo_provider.py` | Runs four operations over a fixed scenario and writes a deterministic JSON artifact to `artifacts/provider_demo.json`. |
 | `tests/phase1/` | Behavioral contract, 42 pytest tests, and a spec-authored golden artifact. |
+| `src/staysmart/domain/models.py` (Phase 2 additions) | `HotelComparison` extended with `unresolved_hotel_ids`, stay context fields and mock markers; new `HotelPolicyInfo` with pet policy provenance and explicit `information_gaps`. |
+| `src/staysmart/services/comparison.py` | `compare_hotels` over the provider Protocol: eager stay-length validation, id dedupe, unknown ids to `unresolved_hotel_ids`, nightly price and total stay price minima over room quotes, preference verification. |
+| `src/staysmart/services/policies.py` | `get_hotel_policies` over the provider Protocol: cancellation facts, pet policy derived from amenities with a source marker, honest `information_gaps`. |
+| `src/staysmart/mcp_server/server.py` | `build_mcp_server` constructing the SDK 2.x `MCPServer` (`staysmart-hotels`, `0.1.0`) with mock-disclosing instructions. |
+| `src/staysmart/mcp_server/tools.py` | Five type-hinted tools returning pydantic models; `StaySmartError` to `ToolError` mapping; currency pinned from settings; empty-comparison guard. |
+| `src/staysmart/mcp_server/__main__.py` | `python -m staysmart.mcp_server` stdio entrypoint. |
+| `scripts/demo_mcp.py` | In-process MCP client runs the contract scenarios and writes `artifacts/mcp_demo.json`. |
+| `tests/phase2/` | Behavioral contract, 47 pytest tests (service, in-process tool calls, real stdio subprocess, snapshot), spec-authored golden artifact. |
 
 ### Search flow as implemented
 
@@ -68,9 +76,7 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 
 | Component | Responsibility |
 | --- | --- |
-| `src/staysmart/services/` | Comparison and policy derivation composed from provider results. |
-| `src/staysmart/mcp_server/` | MCP tools with explicit input and output schemas, validation and error mapping. |
-| `src/staysmart/app/` | Starlette endpoints, request validation, exception handling, health status. |
+| `src/staysmart/app/` | Starlette endpoints, request validation, exception handling, health status, MCP client. |
 | `src/staysmart/rag/` | Document ingestion, chunking, FastEmbed embeddings, local vector index, retrieval, source attribution. |
 | `src/staysmart/agent/` | Natural-language interpretation, tool selection, sequential tool calls, grounded response generation, safeguards. |
 | `frontend/` | Presentation and user interaction only. |
