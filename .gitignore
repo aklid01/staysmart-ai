@@ -1,0 +1,11 @@
+AGENTS.md
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+artifacts/
+.coverage
+dist/
+build/
+*.egg-info/
