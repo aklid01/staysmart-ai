@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ApiError, getHotelDetails, getHotelPolicies } from '../api'
 import type { HotelDetailsPayload, HotelEntry, PolicyInfo } from '../types'
 import { isSearchHit } from '../types'
@@ -57,14 +57,18 @@ export function DetailsDialog({
   onClose: () => void
 }) {
   const hotel = entry.hotel
-  const stay = isSearchHit(entry) ? { check_in: entry.quote.check_in, check_out: entry.quote.check_out } : undefined
+  const stay = useMemo(
+    () =>
+      isSearchHit(entry)
+        ? { check_in: entry.quote.check_in, check_out: entry.quote.check_out }
+        : undefined,
+    [entry],
+  )
   const [details, setDetails] = useState<HotelDetailsPayload | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    setDetails(null)
-    setError(null)
     getHotelDetails(hotel.hotel_id, stay)
       .then((payload) => {
         if (!cancelled) setDetails(payload)
@@ -75,7 +79,7 @@ export function DetailsDialog({
     return () => {
       cancelled = true
     }
-  }, [hotel.hotel_id, stay?.check_in, stay?.check_out])
+  }, [hotel.hotel_id, stay])
 
   return (
     <DialogShell title={`${hotel.name} - details`} onClose={onClose}>
@@ -142,8 +146,6 @@ export function PolicyDialog({ hotelId, onClose }: { hotelId: string; onClose: (
 
   useEffect(() => {
     let cancelled = false
-    setPolicy(null)
-    setError(null)
     getHotelPolicies(hotelId)
       .then((payload) => {
         if (!cancelled) setPolicy(payload)

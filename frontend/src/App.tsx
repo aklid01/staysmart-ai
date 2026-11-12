@@ -172,8 +172,16 @@ export default function App() {
         </button>
       </footer>
 
-      {detailsEntry && <DetailsDialog entry={detailsEntry} onClose={() => setDetailsEntry(null)} />}
-      {policyHotelId && <PolicyDialog hotelId={policyHotelId} onClose={() => setPolicyHotelId(null)} />}
+      {detailsEntry && (
+        <DetailsDialog
+          key={detailsEntry.hotel.hotel_id}
+          entry={detailsEntry}
+          onClose={() => setDetailsEntry(null)}
+        />
+      )}
+      {policyHotelId && (
+        <PolicyDialog key={policyHotelId} hotelId={policyHotelId} onClose={() => setPolicyHotelId(null)} />
+      )}
     </div>
   )
 }

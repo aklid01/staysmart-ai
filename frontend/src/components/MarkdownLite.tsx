@@ -75,7 +75,9 @@ export function MarkdownLite({ text }: { text: string }) {
       flushTable()
       blocks.push(<strong key={`h${key++}`}>{renderInline(trimmed.replace(/^#{1,4}\s/, ''), `h${key}`)}</strong>)
     } else {
-      table.length > 0 ? flushTable() : null
+      if (table.length > 0) {
+        flushTable()
+      }
       paragraph.push(trimmed)
     }
   }

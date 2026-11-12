@@ -1,5 +1,6 @@
 import type { Hotel, HotelEntry } from '../types'
 import { isSearchHit } from '../types'
+import { amenityLabel } from '../amenities'
 
 const DESTINATION_THEMES: { match: string; gradient: string; label: string }[] = [
   { match: 'lis', gradient: 'linear-gradient(135deg, #0f766e 0%, #f59e0b 100%)', label: 'Lisbon' },
@@ -9,23 +10,6 @@ const DESTINATION_THEMES: { match: string; gradient: string; label: string }[] =
 
 function themeFor(hotel: Hotel) {
   return DESTINATION_THEMES.find((theme) => hotel.hotel_id.includes(theme.match)) ?? DESTINATION_THEMES[0]
-}
-
-const AMENITY_LABELS: Record<string, string> = {
-  WIFI: 'Wi-Fi',
-  POOL: 'Pool',
-  GYM: 'Gym',
-  BREAKFAST: 'Breakfast',
-  PARKING: 'Parking',
-  SPA: 'Spa',
-  PET_FRIENDLY: 'Pet-friendly',
-  AIR_CONDITIONING: 'A/C',
-  RESTAURANT: 'Restaurant',
-  SHUTTLE: 'Shuttle',
-}
-
-export function amenityLabel(amenity: string): string {
-  return AMENITY_LABELS[amenity] ?? amenity
 }
 
 interface CardProps {
