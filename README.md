@@ -125,9 +125,9 @@ The chat endpoint needs a reachable LLM endpoint (`LLM_BASE_URL`, default `http:
 
 This machine has several Python 3.13 interpreters and a `pip` that targets a different one than `python`. Always use `uv sync` and `uv run` so commands resolve against the project virtual environment. Never use bare `python` or `pip` for this repository.
 
-Copy `.env.example` to `.env` to override configuration. No secrets are needed at this stage. `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL` will be introduced with the agent in Phase 5 and are not read by current code.
+Copy `.env.example` to `.env` to override configuration. No secrets are needed: the default LLM endpoint needs no API key, and `LLM_API_KEY` stays empty unless your endpoint requires one.
 
-No formatter or linter is configured. Adding one requires separate approval.
+Tooling: `uv run ruff check .` and `uv run ruff format .` for Python, `npm run lint` (oxlint) and `npm run format` (Prettier) in `frontend/`. All four pass clean on the committed code.
 
 ## Test and demo
 
