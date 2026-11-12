@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from starlette.testclient import TestClient
 
+from staysmart.agent.llm import ScriptedLLM
 from staysmart.app.main import create_app
 from staysmart.app.mcp_client import InProcessMcpConnector
 from staysmart.config import Settings
@@ -42,7 +43,11 @@ def mcp_server(provider, settings):
 
 @pytest.fixture
 def app(settings, mcp_server):
-    return create_app(settings, connector=InProcessMcpConnector(mcp_server))
+    return create_app(
+        settings,
+        connector=InProcessMcpConnector(mcp_server),
+        llm=ScriptedLLM([]),
+    )
 
 
 @pytest.fixture

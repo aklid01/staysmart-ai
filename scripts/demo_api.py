@@ -5,6 +5,7 @@ import time
 import httpx
 import uvicorn
 
+from staysmart.agent.llm import LLMCompletion, ScriptedLLM
 from staysmart.app.main import APP_NAME, create_app
 from staysmart.config import PROJECT_ROOT, Settings, configure_logging
 from staysmart.mcp_server.server import SERVER_NAME
@@ -200,7 +201,18 @@ def start_server(app):
 async def run() -> dict:
     settings = Settings(log_level="WARNING")
     configure_logging(settings.log_level)
-    app = create_app(settings)
+    llm = ScriptedLLM(
+        [
+            LLMCompletion(
+                content=(
+                    "This API demo records a scripted model reply so the artifact stays "
+                    "deterministic; the real agent demo lives in scripts/demo_agent.py."
+                ),
+                tool_calls=[],
+            )
+        ]
+    )
+    app = create_app(settings, llm=llm)
 
     server, thread, port = start_server(app)
     try:
@@ -262,11 +274,14 @@ async def run() -> dict:
             )
             policies_kyo = record(client, "GET", "/api/hotels/hotel-kyo-01/policies")
             policies_lis = record(client, "GET", "/api/hotels/hotel-lis-01/policies")
-            chat_stub = record(
+            chat_agent = record(
                 client,
                 "POST",
                 "/api/chat",
-                json={"message": "Find a hotel in Kyoto for two guests in December."},
+                json={
+                    "message": "Find a hotel in Kyoto for two guests in December.",
+                    "conversation_id": "demo-conversation",
+                },
             )
 
             errors = {
@@ -314,7 +329,7 @@ async def run() -> dict:
             "compare_lisbon": summarized(comparison, comparison_summary(comparison["body"], compare_ids)),
             "policies_kyo_01": summarized(policies_kyo, policies_summary(policies_kyo["body"])),
             "policies_lis_01": summarized(policies_lis, policies_summary(policies_lis["body"])),
-            "chat_stub": chat_stub,
+            "chat_agent": chat_agent,
         },
         "errors": errors,
     }

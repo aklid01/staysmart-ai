@@ -55,8 +55,12 @@ def test_e2e_snapshot_matches_spec_authored_golden(golden_path, artifact_path, d
     assert requests["policies_kyo_01"]["body"]["pet_policy"] == "allowed"
     assert requests["policies_lis_01"]["body"]["pet_policy"] == "unknown"
 
-    assert requests["chat_stub"]["status"] == 501
-    assert requests["chat_stub"]["body"]["error"]["code"] == "agent_not_available"
+    assert requests["chat_agent"]["status"] == 200
+    assert requests["chat_agent"]["body"]["message"].startswith(
+        "This API demo records a scripted model reply"
+    )
+    assert requests["chat_agent"]["body"]["conversation_id"] == "demo-conversation"
+    assert requests["chat_agent"]["body"]["tool_trace"] == []
 
     errors = data["errors"]
     assert errors["unknown_destination_search"]["status"] == 404

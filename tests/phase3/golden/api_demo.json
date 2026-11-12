@@ -122,17 +122,19 @@
       "path": "/api/hotels/hotel-van-03/availability",
       "status": 200
     },
-    "chat_stub": {
+    "chat_agent": {
       "body": {
-        "error": {
-          "code": "agent_not_available",
-          "error_type": "AgentNotAvailableError",
-          "message": "The LLM agent is not implemented yet; chat arrives in Phase 5."
-        }
+        "comparison": null,
+        "conversation_id": "demo-conversation",
+        "hotels": [],
+        "message": "This API demo records a scripted model reply so the artifact stays deterministic; the real agent demo lives in scripts/demo_agent.py.",
+        "sources": [],
+        "stopped_early": false,
+        "tool_trace": []
       },
       "method": "POST",
       "path": "/api/chat",
-      "status": 501
+      "status": 200
     },
     "compare_lisbon": {
       "body": {

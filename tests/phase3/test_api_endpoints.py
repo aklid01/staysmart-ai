@@ -3,6 +3,8 @@ import contextlib
 from pydantic import ValidationError
 from starlette.testclient import TestClient
 
+from staysmart.agent.errors import LLMUnavailableError
+from staysmart.agent.llm import ScriptedLLM
 from staysmart.app.main import create_app
 from staysmart.app.mcp_client import InProcessMcpConnector
 from staysmart.domain.models import (
@@ -359,21 +361,19 @@ def test_policies_for_non_pet_hotel_report_gaps(client):
     assert body["information_gaps"] == ["check_in_time", "check_out_time", "pet_policy"]
 
 
-def test_chat_stub_returns_agent_not_available(client):
-    response = client.post(
-        "/api/chat",
-        json={
-            "message": "Find a hotel in Kyoto",
-            "conversation_id": "conv-1",
-            "history": [{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hello"}],
-        },
+def test_chat_maps_unavailable_llm_to_503(settings, mcp_server):
+    app = create_app(
+        settings,
+        connector=InProcessMcpConnector(mcp_server),
+        llm=ScriptedLLM([LLMUnavailableError("connection refused")]),
     )
+    with TestClient(app) as client:
+        response = client.post("/api/chat", json={"message": "Find a hotel in Kyoto"})
 
-    assert response.status_code == 501
+    assert response.status_code == 503
     error = response.json()["error"]
-    assert error["code"] == "agent_not_available"
-    assert error["error_type"] == "AgentNotAvailableError"
-    assert error["message"] == "The LLM agent is not implemented yet; chat arrives in Phase 5."
+    assert error["code"] == "llm_unavailable"
+    assert error["error_type"] == "LLMUnavailableError"
 
 
 def test_chat_empty_message_returns_validation_error(client):
