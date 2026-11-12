@@ -2,7 +2,7 @@
 
 ## Implementation status
 
-Read this first. Phases 0 through 6 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
+Read this first. Phases 0 through 7 are implemented; the MVP is feature-complete. Everything in this document describes implemented behavior.
 
 | Component | Phase | Status |
 | --- | --- | --- |
@@ -13,6 +13,7 @@ Read this first. Phases 0 through 6 are implemented. Everything marked "not yet 
 | RAG ingestion, indexing and retrieval | 4 | Implemented |
 | LLM agent orchestration | 5 | Implemented |
 | TypeScript frontend | 6 | Implemented |
+| Integration testing, reliability and documentation completion | 7 | Implemented |
 
 ## Layering
 
@@ -115,6 +116,6 @@ No remaining planned components; Phase 7 covers integration hardening and docume
 - The provider interface is replaceable. A real connectivity provider can implement the same Protocol later.
 - No reservations, payments or booking transactions.
 
-## Data flow (as of Phase 6)
+## Data flow
 
 The browser app calls `POST /api/chat` with the message, a session-generated conversation id and recent history; the agent plans tool calls, executes them over MCP and RAG, and returns grounded text with tool-derived hotel payloads, comparison data, knowledge sources and a tool trace. The frontend renders cards, tables and citations from those structured payloads and fetches details or policies from the structured endpoints when the user opens a dialog. Structured requests (`/api/search`, `/api/hotels/{id}`, `/api/hotels/{id}/policies`, `/api/hotels/{id}/availability`, `/api/compare`) map to one MCP tool call each and return the payload verbatim. The browser never talks to the MCP server or the model directly.

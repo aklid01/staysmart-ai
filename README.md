@@ -15,9 +15,9 @@ An educational MVP demonstrating MCP integration, LLM tool calling, RAG and API 
 | 4 - RAG ingestion and retrieval | Implemented |
 | 5 - LLM agent orchestration | Implemented |
 | 6 - TypeScript frontend | Implemented |
-| 7 - Integration testing and final documentation | Not yet implemented |
+| 7 - Integration testing and final documentation | Implemented |
 
-Documentation describes implemented behavior only. Sections describing future phases are design notes, not available features.
+Documentation describes implemented behavior only.
 
 Phase 1 provides:
 
@@ -64,6 +64,12 @@ Phase 6 adds:
 - Details and policies dialogs call the structured endpoints (`/api/hotels/{id}` with the stay dates, `/api/hotels/{id}/policies`), rendering room quotes, cancellation terms, pet policy with its source marker and explicit information-gap chips.
 - The header shows a live `/api/health` status dot. Errors render from the API error envelope; a stopped backend shows a readable banner while the thread keeps the user's message for retry.
 - Browser E2E verified black-box with screenshots and an interaction log (`tests/phase6/interaction_log.json`, screenshots under `artifacts/ui_demo/`).
+
+Phase 7 adds:
+
+- A cross-layer integration suite (`tests/phase7/`): one full journey from health through chat (search plus knowledge tool calls) to the structured endpoints with cross-layer consistency checks, documentation drift guards (routes vs `docs/API.md`, env vars vs README and `.env.example`, quickstart commands vs real files), and an artifact sweep that regenerates every demo artifact from current code and verifies mock markers.
+- Reliability polish: the agent system prompt now requires quoting check-in/check-out times from retrieved destination guides (fixing the conservative-answer variance observed in Phase 5), the frontend linter passes with zero warnings, and known limitations (MCP session recovery requires a service restart) are documented in the decision record.
+- The MVP is feature-complete: all phases 0-7 implemented, 190+ tests green across the suite, every Definition of Done criterion verified by an automated test or a committed artifact.
 
 ## Stack
 
@@ -125,8 +131,10 @@ No formatter or linter is configured. Adding one requires separate approval.
 
 ## Test and demo
 
+Run the Python test suite (phases 1-5 and 7; phase 6 is the browser-driven frontend E2E documented in `tests/phase6/`):
+
 ```bash
-uv run pytest tests/phase1 tests/phase2 tests/phase3 tests/phase4 tests/phase5 -q
+uv run pytest tests/phase1 tests/phase2 tests/phase3 tests/phase4 tests/phase5 tests/phase7 -q
 uv run python scripts/demo_provider.py
 uv run python scripts/demo_mcp.py
 uv run python scripts/demo_api.py
@@ -216,6 +224,7 @@ tests/phase3/                               HTTP API contract, tests, golden art
 tests/phase4/                               RAG contract, tests, golden artifact
 tests/phase5/                               agent contract, tests, semantic E2E
 tests/phase6/                               frontend contract and browser E2E interaction log
+tests/phase7/                               integration journey, docs-consistency and artifact sweep
 docs/                                       architecture and decision records
 ```
 
