@@ -1,0 +1,69 @@
+{
+  "artifact_version": 1,
+  "contract": "tests/phase6/CONTRACT.md",
+  "frontend_url": "http://localhost:5173/",
+  "backend_url": "http://127.0.0.1:8000",
+  "viewport": {"width": 1280, "height": 720},
+  "environment_preparation": [
+    "Started the Starlette backend with 'uv run python -m staysmart.app' on port 8000 (real LLM endpoint configured).",
+    "Started the Vite dev server with 'npm run dev' in frontend/ on port 5173 with the /api proxy.",
+    "Verified backend 200, frontend 200 and proxied health 200 before testing.",
+    "For test point 6 only: stopped the backend to make the failure state reachable, then restarted it afterwards."
+  ],
+  "scenarios": [
+    {
+      "id": "t1_load",
+      "action": "Open http://localhost:5173/ and observe the initial state.",
+      "expected": "Header with brand, green health dot, 'API connected', 'mock data' badge, empty-state prompt, chat input with disabled Send.",
+      "observed": "All present; Send disabled while the input is empty.",
+      "result": "pass",
+      "screenshot": "t1_load.png"
+    },
+    {
+      "id": "t2_search_flow",
+      "action": "Type the Kyoto search request with per-keystroke input and press Enter.",
+      "expected": "User bubble, typing indicator with disabled Send, then an assistant reply rendering hotel cards built from tool payloads.",
+      "observed": "User bubble right-aligned; 'Thinking...' row with pulsing dots; reply rendered one card (Gion Machiya Stay) with Kyoto gradient placeholder, mock badge, 4 stars, 9.0 rating, amenity chips, sold-out dates, partial/refundable badge and Details/Policies buttons; tool trace shows search_hotels (status ok); assistant text discloses the December 5 sold-out night.",
+      "result": "pass",
+      "screenshot": "t2_typing_indicator.png",
+      "notes": "A fullPage screenshot (t2_result_cards_fullpage_artifact.png) shows a doubled layout, but the DOM contains exactly one .app-shell and body scrollWidth equals the viewport, so the duplication is a capture-stitching artifact of the browser tooling, not the page."
+    },
+    {
+      "id": "t3_details_dialog",
+      "action": "Click Details on the result card.",
+      "expected": "Dialog with the stay dates, room quote table, cancellation policy and mock markers.",
+      "observed": "Dialog titled 'Gion Machiya Stay - details' shows 2026-12-04 to 2026-12-07, 1 room, 2 guests, USD, mock data; table row Tatami Double/futon/sleeps 2/2-of-3 nights/avg 234.28/total '-'/Sold out: 2026-12-05; partial cancellation badge. Closes via the Close button.",
+      "result": "pass",
+      "screenshot": "t3_details_dialog.png"
+    },
+    {
+      "id": "t4_policy_dialog",
+      "action": "Click Policies on the result card.",
+      "expected": "Dialog with cancellation facts, pet policy with source marker, check-in/out times and explicit information gaps.",
+      "observed": "Pet 'allowed (source: amenities)'; check-in/out 'not documented / not documented'; gap chips 'check in time: not provided by the provider' and 'check out time: not provided by the provider'.",
+      "result": "pass",
+      "screenshot": "t4_policy_dialog.png"
+    },
+    {
+      "id": "t5_comparison_flow",
+      "action": "Type a comparison request for two Lisbon hotels and press Enter.",
+      "expected": "Comparison table rendered from the compare payload with per-hotel rows, honest missing totals and status badges.",
+      "observed": "Agent ran search_hotels then compare_hotels (both chips visible); comparison table shows 2026-12-04 to 2026-12-07 context, rows for Alfama Riverside Boutique (152.44 USD nightly, 457.32 USD total, available) and Baixa Central Hotel (106.76 USD nightly, 'not available' total, unavailable), free/flexible cancellation badges, no unresolved-id or unmet-preference notices.",
+      "result": "pass",
+      "screenshot": "t5_comparison_table.png"
+    },
+    {
+      "id": "t6_error_state",
+      "action": "With the backend stopped, send a chat message.",
+      "expected": "Error banner with the failure code; the user's message stays visible for retry.",
+      "observed": "User bubble remains; banner renders '[http_error] Request failed with status 502'. The Vite dev proxy answers its own 502 for the dead upstream with a non-JSON body, so the client shows the generic fallback code instead of a structured envelope code (the structured 503 llm_unavailable / rag_unavailable envelopes are covered by tests/phase5).",
+      "result": "pass",
+      "screenshot": "t6_error_banner.png"
+    }
+  ],
+  "tooling_notes": [
+    "The in-app browser's fill() sets the DOM value without firing React's onChange, so inputs were performed with per-keystroke type() calls; the initial fill-driven attempt was retracted as a test-tooling artifact, not an app bug.",
+    "Console listening is not exposed by the browser tooling; no visible page errors (blank screens, broken layout, failed resources) were observed during the run.",
+    "fullPage captures duplicate content in this backend; DOM checks (single .app-shell, scrollWidth == viewport) prove the page itself is correct, so viewport screenshots were used for evidence."
+  ]
+}
