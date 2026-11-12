@@ -1,5 +1,7 @@
 # Phase 3 Starlette application service and MCP client contract
 
+> Phase 5 note: the `/api/chat` stub described below was replaced in Phase 5 by the LLM agent (200 structured responses, 503 error mapping). The `tests/phase3/` chat tests and the `demo_api.py` chat record were updated to the superseding behavior; see `tests/phase5/CONTRACT.md`. Every other section still describes current behavior.
+
 This document is the specification for Phase 3. It is written before the application implementation. Tests and the golden E2E artifact are derived from it. If implementation and contract disagree, the contract wins and the implementation is fixed.
 
 ## Scope

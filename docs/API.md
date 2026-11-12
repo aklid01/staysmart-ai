@@ -1,6 +1,6 @@
 # HTTP API
 
-Status: implemented (Phase 3). Everything below describes behavior that exists in `src/staysmart/app/` and is covered by `tests/phase3/`.
+Status: implemented (Phases 3-5). Everything below describes behavior that exists in `src/staysmart/app/` and is covered by `tests/phase3/` and `tests/phase5/`.
 
 The Starlette application service accepts frontend requests, validates them against request models that mirror the MCP tool inputs, executes each data operation through exactly one MCP tool call over stdio, and returns the tool payload verbatim. The HTTP layer contains no hotel business logic.
 
@@ -14,7 +14,7 @@ The server listens on `STAYSMART_HTTP_HOST:STAYSMART_HTTP_PORT` (default `127.0.
 
 ## Endpoints
 
-| Method | Path | Backing MCP tool | Purpose |
+| Method | Path | Backing tool | Purpose |
 | --- | --- | --- | --- |
 | GET | `/api/health` | `list_tools` ping | Liveness plus MCP connectivity |
 | POST | `/api/search` | `search_hotels` | Structured hotel search |
@@ -22,7 +22,7 @@ The server listens on `STAYSMART_HTTP_HOST:STAYSMART_HTTP_PORT` (default `127.0.
 | GET | `/api/hotels/{hotel_id}/policies` | `get_hotel_policies` | Grounded policy facts |
 | POST | `/api/hotels/{hotel_id}/availability` | `check_availability` | Per-night availability and pricing |
 | POST | `/api/compare` | `compare_hotels` | Side-by-side comparison |
-| POST | `/api/chat` | none (Phase 3 stub) | Chat entry point reserved for the Phase 5 agent |
+| POST | `/api/chat` | agent loop (Phase 5) | Natural-language assistant |
 
 Success responses are the MCP tool's structured payload unchanged, including the `data_source="mock"` and `is_live=False` markers on every result.
 
@@ -113,19 +113,29 @@ The response is the `HotelComparison` payload: one `row` per resolved hotel with
 
 ```json
 {
-  "message": "Find a hotel in Kyoto for two guests in December.",
+  "message": "Find hotels in Kyoto for two guests in December under 250 with breakfast",
   "conversation_id": "conv-1",
   "history": [{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hello"}]
 }
 ```
 
-`message` is required and non-empty; `conversation_id` and `history` are accepted now and will be used by the Phase 5 agent. Phase 3 always responds:
+`message` is required and non-blank; `conversation_id` is echoed or generated as a short UUID; `history` passes prior turns through to the model (the server stores nothing between requests). The agent (see [AGENT_WORKFLOW.md](AGENT_WORKFLOW.md)) plans tool calls over MCP and the knowledge corpus, then answers. Phase 5 response, status 200:
 
 ```json
-{"error": {"code": "agent_not_available", "message": "The LLM agent is not implemented yet; chat arrives in Phase 5.", "error_type": "AgentNotAvailableError"}}
+{
+  "message": "Gion Machiya Stay is the pick ... [Gion Machiya Stay pet policy]",
+  "hotels": [{"hotel": {}, "quote": {}}],
+  "comparison": null,
+  "sources": [{"doc_id": "hotel-kyo-01-pet-policy", "title": "...", "category": "pet_policy", "chunk_count": 2}],
+  "tool_trace": [{"tool": "search_hotels", "status": "ok"}],
+  "conversation_id": "conv-1",
+  "stopped_early": false
+}
 ```
 
-with status 501. No LLM call, conversation storage or tool dispatch happens in Phase 3.
+`hotels` holds real tool payloads (search hits and details, deduped by hotel id) for rendering cards; `sources` carries knowledge citations; `tool_trace` records every attempted tool call with status `ok`, `error` or `duplicate`; `stopped_early` marks runs ended by the turn or tool budget with a forced summary. The model cannot inject entries into `hotels`, so fabricated hotels cannot reach the frontend through this field.
+
+Error cases: unreachable model -> 503 `llm_unavailable`; missing vector index -> 503 `rag_unavailable` with the instruction to run `python -m staysmart.rag ingest`; blank message or invalid history role -> 422.
 
 ## Error envelope
 
@@ -148,6 +158,8 @@ Every error response uses one envelope:
 | Empty `hotel_ids` | 400 | `empty_hotel_ids` | Tool failure classified from message |
 | Any other tool failure, including provider crashes | 502 | `tool_error` | Classifier fallback |
 | MCP session failure mid-request | 503 | `mcp_unavailable` | HTTP layer |
+| Unreachable or failing LLM | 503 | `llm_unavailable` | Agent error mapping |
+| Missing knowledge index | 503 | `rag_unavailable` | Agent error mapping |
 | Unknown route | 404 | `not_found` | HTTP layer |
 | Method not allowed | 405 | `method_not_allowed` | HTTP layer |
 | Unhandled exception | 500 | `internal_error` | HTTP layer, internals logged not returned |

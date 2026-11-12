@@ -13,7 +13,7 @@ An educational MVP demonstrating MCP integration, LLM tool calling, RAG and API 
 | 2 - Service layer and MCP server with five tools | Implemented |
 | 3 - Starlette application service and MCP client integration | Implemented |
 | 4 - RAG ingestion and retrieval | Implemented |
-| 5 - LLM agent orchestration | Not yet implemented |
+| 5 - LLM agent orchestration | Implemented |
 | 6 - TypeScript frontend | Not yet implemented |
 | 7 - Integration testing and final documentation | Not yet implemented |
 
@@ -50,17 +50,24 @@ Phase 4 adds:
 - A `RagRetriever` service with metadata filters (hotel, destination, category), semantic ranking, and context construction with per-document source attribution, ready for the Phase 5 agent to combine with structured hotel data.
 - An offline test path via a deterministic stub embedder plus a real-model E2E snapshot (42 tests in phase 4; 164 total). The FastEmbed model is a free one-time download; no paid credentials anywhere.
 
+Phase 5 adds:
+
+- An LLM agent in `src/staysmart/agent/` wired to `POST /api/chat`: it plans tool calls over the five MCP tools plus a `search_knowledge` knowledge tool, executes them over the app's stdio MCP session and the Phase 4 retriever, and answers with grounded text, tool-derived hotel payloads, knowledge sources and a tool trace.
+- Structural safeguards: at most 6 model turns and 12 tool calls per chat with forced no-tool summaries, exact-duplicate call rejection, tool errors fed back to the model, and hotel cards assembled exclusively from real tool payloads so fabricated hotels cannot reach the frontend.
+- Model configuration through `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL` (OpenAI-compatible endpoints; the default targets the local endpoint and needs no key). Agent logic tests run offline against a scripted model; the real-model E2E skips when the endpoint is unreachable.
+- 181 tests total across phases 1-5, including endpoint contract tests for the new chat behavior (200 structured response, 503 `llm_unavailable`, 503 `rag_unavailable`).
+
 ## Stack
 
 - Python 3.13, uv, pydantic v2
 - Official Python MCP SDK 2.x over local stdio transport, implemented in Phase 2 (`uv run python -m staysmart.mcp_server`)
 - Starlette for the HTTP application layer, implemented in Phase 3 (`uv run python -m staysmart.app`)
 - FastEmbed (`BAAI/bge-small-en-v1.5`) with a local numpy vector index for RAG, implemented in Phase 4 (`uv run python -m staysmart.rag ingest`)
-- Configurable OpenAI-compatible LLM endpoint (Phase 5)
+- OpenAI-compatible LLM agent, implemented in Phase 5 (default target `http://127.0.0.1:3425/v1`, no key needed)
 - TypeScript frontend (Phase 6)
 - pytest
 
-No paid API credentials are required for the mock provider, the MCP tools, RAG retrieval or the test suite. A live LLM is optional and configured through environment variables in a later phase. The FastEmbed model downloads once (free, roughly 0.1 GB) on the first RAG ingestion or demo run and is cached locally afterwards.
+No paid API credentials are required for the mock provider, the MCP tools, RAG retrieval, the agent logic tests or the test suite. The FastEmbed model downloads once (free, roughly 0.1 GB) on the first RAG ingestion or demo run and is cached locally afterwards. Live chat answers need a reachable LLM endpoint; every other feature runs fully offline.
 
 ## Quickstart
 
@@ -87,7 +94,10 @@ Try it while the service runs:
 ```bash
 curl -s http://127.0.0.1:8000/api/health
 curl -s -X POST http://127.0.0.1:8000/api/search -H "content-type: application/json" -d '{"destination":"Kyoto","check_in":"2026-12-04","check_out":"2026-12-07","max_nightly_budget":250.0,"min_rating":8.0,"amenities":["WIFI","BREAKFAST"]}'
+curl -s -X POST http://127.0.0.1:8000/api/chat -H "content-type: application/json" -d '{"message":"Find a hotel in Kyoto for two guests in December under 250 with breakfast"}'
 ```
+
+The chat endpoint needs a reachable LLM endpoint (`LLM_BASE_URL`, default `http://127.0.0.1:3425/v1`). If the model is down, chat returns 503 `llm_unavailable` while every structured endpoint keeps working.
 
 This machine has several Python 3.13 interpreters and a `pip` that targets a different one than `python`. Always use `uv sync` and `uv run` so commands resolve against the project virtual environment. Never use bare `python` or `pip` for this repository.
 
@@ -98,12 +108,13 @@ No formatter or linter is configured. Adding one requires separate approval.
 ## Test and demo
 
 ```bash
-uv run pytest tests/phase1 tests/phase2 tests/phase3 tests/phase4 -q
+uv run pytest tests/phase1 tests/phase2 tests/phase3 tests/phase4 tests/phase5 -q
 uv run python scripts/demo_provider.py
 uv run python scripts/demo_mcp.py
 uv run python scripts/demo_api.py
 uv run python scripts/demo_rag.py
 uv run python -m staysmart.rag ingest
+uv run python scripts/demo_agent.py
 ```
 
 The provider demo runs a realistic scenario: a Kyoto search with budget, rating and amenity filters; a Lisbon search with a different budget; a details lookup for a hotel with two room types; and an availability check for a fully sold-out stay. It writes a deterministic snapshot to `artifacts/provider_demo.json` (gitignored). `tests/phase1/test_e2e_snapshot.py` regenerates that artifact and compares it with `tests/phase1/golden/provider_demo.json`, which is authored from `tests/phase1/CONTRACT.md` rather than generated by the implementation. Line endings are normalized before comparison because Git may check out CRLF on Windows.
@@ -112,7 +123,9 @@ The MCP demo connects an in-process MCP client to the built server and runs the 
 
 The API demo launches a real uvicorn server on an ephemeral port with the production stdio connector, calls every endpoint (search, details, availability, comparison with an unresolved id, two policy lookups, the chat stub) plus six error scenarios, and writes `artifacts/api_demo.json`, checked against `tests/phase3/golden/api_demo.json` by `tests/phase3/test_api_e2e_snapshot.py`.
 
-The RAG demo ingests the knowledge corpus with FastEmbed into `data/rag/index` and runs six retrieval scenarios (pet policy, cancellation, check-in times, parking, room description, spa/pool by destination), writing `artifacts/rag_demo.json`, checked against `tests/phase4/golden/rag_demo.json` by `tests/phase4/test_rag_e2e_snapshot.py`. The first run downloads the free embedding model once; afterwards everything runs offline. All demos use `Settings()`-style defaults, so artifacts are pinned to the bundled data and unaffected by a local `.env`.
+The RAG demo ingests the knowledge corpus with FastEmbed into `data/rag/index` and runs six retrieval scenarios (pet policy, cancellation, check-in times, parking, room description, spa/pool by destination), writing `artifacts/rag_demo.json`, checked against `tests/phase4/golden/rag_demo.json` by `tests/phase4/test_rag_e2e_snapshot.py`. The first run downloads the free embedding model once; afterwards everything runs offline.
+
+The agent demo runs three real-model chat scenarios end to end (filtered search, a policy question combining knowledge and structured data, and a comparison with recommendation) and writes `artifacts/agent_demo.json`. Model text is not deterministic, so `tests/phase5/test_agent_e2e.py` verifies it semantically and skips when `LLM_BASE_URL` is unreachable. All demos use `Settings()`-style defaults, so artifacts are pinned to the bundled data and unaffected by a local `.env`.
 
 ## Configuration
 
@@ -129,6 +142,9 @@ The RAG demo ingests the knowledge corpus with FastEmbed into `data/rag/index` a
 | `STAYSMART_RAG_CORPUS_PATH` | bundled `data/knowledge/v1` | Knowledge corpus directory |
 | `STAYSMART_RAG_INDEX_PATH` | `data/rag/index` | Generated vector index directory (gitignored) |
 | `STAYSMART_RAG_MODEL` | `BAAI/bge-small-en-v1.5` | FastEmbed model used for embeddings |
+| `LLM_BASE_URL` | `http://127.0.0.1:3425/v1` | OpenAI-compatible endpoint for the chat agent |
+| `LLM_API_KEY` | empty | API key; the default local endpoint needs none |
+| `LLM_MODEL` | `auto/glm-5.3-flash` | Model id as the endpoint lists it |
 
 Valid booking dates are `[anchor_date, anchor_date + min(dataset.window_days, settings.window_days))`. A stay must be 1 to 30 nights.
 
@@ -136,7 +152,7 @@ Valid booking dates are `[anchor_date, anchor_date + min(dataset.window_days, se
 
 `src/staysmart/providers/base.py` defines the `HotelProvider` Protocol. `MockHotelProvider` is the only implementation. Every returned object carries `data_source="mock"` and `is_live=False`. A partially or fully sold-out stay reports `available=False` and `total_price=None`; it never invents a total. `compare_hotels` and `get_hotel_policies` are service-layer derivations over the Protocol in `src/staysmart/services/`, and the MCP tools in `src/staysmart/mcp_server/` depend only on the Protocol and those services, never on the concrete provider.
 
-The provider behavioral contract, inventory formula, expected values and failure-mode list live in [tests/phase1/CONTRACT.md](tests/phase1/CONTRACT.md). The service and MCP tool contract lives in [tests/phase2/CONTRACT.md](tests/phase2/CONTRACT.md). The HTTP API contract lives in [tests/phase3/CONTRACT.md](tests/phase3/CONTRACT.md). The RAG contract lives in [tests/phase4/CONTRACT.md](tests/phase4/CONTRACT.md).
+The provider behavioral contract, inventory formula, expected values and failure-mode list live in [tests/phase1/CONTRACT.md](tests/phase1/CONTRACT.md). The service and MCP tool contract lives in [tests/phase2/CONTRACT.md](tests/phase2/CONTRACT.md). The HTTP API contract lives in [tests/phase3/CONTRACT.md](tests/phase3/CONTRACT.md). The RAG contract lives in [tests/phase4/CONTRACT.md](tests/phase4/CONTRACT.md). The agent contract lives in [tests/phase5/CONTRACT.md](tests/phase5/CONTRACT.md).
 
 ## Project layout
 
@@ -164,16 +180,22 @@ src/staysmart/rag/embedder.py               FastEmbed and deterministic test emb
 src/staysmart/rag/index.py                  local vector index with cosine search
 src/staysmart/rag/ingest.py                 build_index pipeline and ingest entrypoint
 src/staysmart/rag/service.py                RagRetriever retrieval and context building
+src/staysmart/agent/llm.py                  OpenAI-compatible client and scripted test model
+src/staysmart/agent/tools.py                agent tool specs and dispatcher
+src/staysmart/agent/prompts.py              grounded system prompt
+src/staysmart/agent/agent.py                HotelAgent loop, budgets and safeguards
 data/hotels/v1/hotels.json                  versioned mock dataset
 data/knowledge/v1/                          authored markdown knowledge corpus
 scripts/demo_provider.py                    provider E2E artifact generator
 scripts/demo_mcp.py                         MCP E2E artifact generator
 scripts/demo_api.py                         HTTP API E2E artifact generator
 scripts/demo_rag.py                         RAG E2E artifact generator
+scripts/demo_agent.py                       agent E2E artifact generator (real LLM)
 tests/phase1/                               provider contract, tests, golden artifact
 tests/phase2/                               service and MCP contract, tests, golden artifact
 tests/phase3/                               HTTP API contract, tests, golden artifact
 tests/phase4/                               RAG contract, tests, golden artifact
+tests/phase5/                               agent contract, tests, semantic E2E
 docs/                                       architecture and decision records
 ```
 

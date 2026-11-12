@@ -2,7 +2,7 @@
 
 ## Implementation status
 
-Read this first. Phases 0 through 4 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
+Read this first. Phases 0 through 5 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
 
 | Component | Phase | Status |
 | --- | --- | --- |
@@ -11,18 +11,19 @@ Read this first. Phases 0 through 4 are implemented. Everything marked "not yet 
 | Service layer, MCP server and five tools | 2 | Implemented |
 | Starlette app and MCP client | 3 | Implemented |
 | RAG ingestion, indexing and retrieval | 4 | Implemented |
-| LLM agent orchestration | 5 | Not yet implemented |
+| LLM agent orchestration | 5 | Implemented |
 | TypeScript frontend | 6 | Not yet implemented |
 
 ## Layering
 
-Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG (`src/staysmart/rag/`) is a separate retrieval channel for descriptive context: it depends on domain models only, is never wired through the MCP tools, and never supplies prices or availability. The LLM agent will sit above both channels through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
+Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG (`src/staysmart/rag/`) is a separate retrieval channel for descriptive context: it depends on domain models only, is never wired through the MCP tools, and never supplies prices or availability. The LLM agent (`src/staysmart/agent/`) sits above both channels through a configurable OpenAI-compatible endpoint, calling MCP tools for facts and RAG for context, with bounded turns, duplicate rejection and tool-payload-only hotel cards. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
 
 ```mermaid
 flowchart TD
   FE["Frontend TS - Phase 6, planned"] -->|HTTP| APP["Starlette app + MCP client - implemented"]
   APP -->|"stdio tool calls"| TOOLS["MCP tools - implemented"]
-  AGENT["LLM agent - Phase 5, planned"] --> TOOLS
+  APP -->|"chat"| AGENT["LLM agent - implemented"]
+  AGENT --> TOOLS
   AGENT -.->|"grounded context"| RAG["RAG retrieval - implemented"]
   RAG --> CORPUS["data/knowledge/v1 - implemented"]
   TOOLS --> SVC["Service layer - implemented"]
@@ -72,6 +73,12 @@ flowchart TD
 | `src/staysmart/rag/service.py` | `RagRetriever.retrieve` (filtered semantic search) and `build_context` (numbered context blocks plus per-document sources). |
 | `scripts/demo_rag.py` | Ingests the corpus with FastEmbed, runs six pinned retrieval scenarios and writes `artifacts/rag_demo.json`. |
 | `tests/phase4/` | Behavioral contract, 42 pytest tests (corpus validation, dataset consistency, chunking, index, retrieval, real-model snapshot), golden artifact. |
+| `src/staysmart/agent/llm.py` | `ChatLLM` protocol, `OpenAICompatLLM` (async OpenAI SDK against any OpenAI-compatible endpoint, temperature 0.1, errors wrapped in `LLMUnavailableError`) and `ScriptedLLM` for offline tests. |
+| `src/staysmart/agent/tools.py` | Six function specs exposed to the model (five MCP tools plus `search_knowledge`) and the dispatcher executing hotel tools over the MCP session and knowledge calls through `RagRetriever`. |
+| `src/staysmart/agent/prompts.py` | The grounded system prompt: no invented facts, mock-data disclosure, date-window resolution, source citations, unmet-preference honesty. |
+| `src/staysmart/agent/agent.py` | `HotelAgent` loop with 6-turn and 12-tool-call budgets, duplicate-call rejection, forced summaries, tool-payload-only hotel cards, and `AgentTurnResult`. |
+| `scripts/demo_agent.py` | Runs three real-model scenarios end to end and writes `artifacts/agent_demo.json` (verified semantically, not byte-compared). |
+| `tests/phase5/` | Behavioral contract, 18 pytest tests (loop safeguards, endpoint contract, real-model E2E with reachability skip). |
 
 ### Search flow as implemented
 
@@ -94,7 +101,6 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 
 | Component | Responsibility |
 | --- | --- |
-| `src/staysmart/agent/` | Natural-language interpretation, tool selection, sequential tool calls, grounded response generation, safeguards. |
 | `frontend/` | Presentation and user interaction only. |
 
 ## Invariants
@@ -105,9 +111,10 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 - Structured hotel search and RAG retrieval stay separate channels. Live prices and availability never come from RAG documents, and the corpus consistency tests pin knowledge facts to the dataset.
 - MCP communication over stdio stays separate from the frontend HTTP interface: the browser only ever talks to the Starlette layer, and each HTTP data operation maps to one MCP tool call.
 - The HTTP layer holds no hotel business logic: request models mirror tool inputs, and success payloads pass through unchanged.
+- The agent presents only tool-returned hotels, prices and availability; the `hotels` array in chat responses is assembled from real tool payloads, so the model cannot fabricate cards. Agent execution is bounded (6 turns, 12 tool calls) with duplicate-call rejection.
 - The provider interface is replaceable. A real connectivity provider can implement the same Protocol later.
 - No reservations, payments or booking transactions.
 
-## Data flow (as of Phase 4)
+## Data flow (as of Phase 5)
 
-HTTP requests arrive at the Starlette layer, where request models validate shape (`extra="forbid"`, positive guests and rooms). Each data endpoint forwards its arguments through one MCP tool call over the stdio session and returns the tool payload verbatim. Tool failures carry the provider message, which the HTTP classifier maps to 404, 400 or 502; MCP session failures become 503. Separately, the RAG channel ingests the authored corpus into a local vector index and serves filtered semantic retrieval with per-document sources for the Phase 5 agent, which will combine provider facts with retrieved context in grounded responses. The frontend (Phase 6) will render result cards, comparison views, details, policy sources, and loading or error states from this JSON.
+Structured requests hit the Starlette endpoints and map to one MCP tool call each, returning the tool payload verbatim. Chat requests flow through `HotelAgent`: the model plans tool calls, the agent executes them over the MCP session and the knowledge retriever, and the response combines grounded text with tool-derived hotel payloads, RAG sources and a tool trace. Tool failures are classified for HTTP semantics; agent budgets force honest summaries instead of unbounded loops. The frontend (Phase 6) will render chat answers, result cards from the `hotels` array, comparison views, policy sources and loading or error states.
