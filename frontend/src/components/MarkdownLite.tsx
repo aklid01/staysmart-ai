@@ -41,18 +41,33 @@ export function MarkdownLite({ text }: { text: string }) {
   const flushTable = () => {
     if (table.length > 1) {
       const rows = table
-        .map((line) => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()))
+        .map((line) =>
+          line
+            .trim()
+            .replace(/^\|/, '')
+            .replace(/\|$/, '')
+            .split('|')
+            .map((cell) => cell.trim()),
+        )
         .filter((cells) => !cells.every((cell) => /^-{2,}$/.test(cell) || cell === ''))
       if (rows.length > 0) {
         const [header, ...body] = rows
         blocks.push(
           <table key={`t${key++}`} className="md-table">
             <thead>
-              <tr>{header.map((cell, i) => <th key={i}>{renderInline(cell, `th${key}-${i}`)}</th>)}</tr>
+              <tr>
+                {header.map((cell, i) => (
+                  <th key={i}>{renderInline(cell, `th${key}-${i}`)}</th>
+                ))}
+              </tr>
             </thead>
             <tbody>
               {body.map((cells, r) => (
-                <tr key={r}>{cells.map((cell, i) => <td key={i}>{renderInline(cell, `td${key}-${r}-${i}`)}</td>)}</tr>
+                <tr key={r}>
+                  {cells.map((cell, i) => (
+                    <td key={i}>{renderInline(cell, `td${key}-${r}-${i}`)}</td>
+                  ))}
+                </tr>
               ))}
             </tbody>
           </table>,
@@ -73,7 +88,11 @@ export function MarkdownLite({ text }: { text: string }) {
     } else if (/^#{1,4}\s/.test(trimmed)) {
       flushParagraph()
       flushTable()
-      blocks.push(<strong key={`h${key++}`}>{renderInline(trimmed.replace(/^#{1,4}\s/, ''), `h${key}`)}</strong>)
+      blocks.push(
+        <strong key={`h${key++}`}>
+          {renderInline(trimmed.replace(/^#{1,4}\s/, ''), `h${key}`)}
+        </strong>,
+      )
     } else {
       if (table.length > 0) {
         flushTable()

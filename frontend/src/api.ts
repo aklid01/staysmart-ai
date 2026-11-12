@@ -1,9 +1,4 @@
-import type {
-  ChatResponse,
-  HealthResponse,
-  HotelDetailsPayload,
-  PolicyInfo,
-} from './types'
+import type { ChatResponse, HealthResponse, HotelDetailsPayload, PolicyInfo } from './types'
 
 export class ApiError extends Error {
   code: string
@@ -21,7 +16,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`/api${path}`, init)
   } catch {
-    throw new ApiError('network_error', 'Cannot reach the StaySmart API. Is the backend running on port 8000?', 0)
+    throw new ApiError(
+      'network_error',
+      'Cannot reach the StaySmart API. Is the backend running on port 8000?',
+      0,
+    )
   }
   if (!response.ok) {
     let code = 'http_error'
@@ -68,7 +67,9 @@ export function getHotelDetails(
     params.set('check_out', stay.check_out)
   }
   const query = params.toString()
-  return request<HotelDetailsPayload>(`/hotels/${encodeURIComponent(hotelId)}${query ? `?${query}` : ''}`)
+  return request<HotelDetailsPayload>(
+    `/hotels/${encodeURIComponent(hotelId)}${query ? `?${query}` : ''}`,
+  )
 }
 
 export function getHotelPolicies(hotelId: string): Promise<PolicyInfo> {

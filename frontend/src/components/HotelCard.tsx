@@ -5,11 +5,18 @@ import { amenityLabel } from '../amenities'
 const DESTINATION_THEMES: { match: string; gradient: string; label: string }[] = [
   { match: 'lis', gradient: 'linear-gradient(135deg, #0f766e 0%, #f59e0b 100%)', label: 'Lisbon' },
   { match: 'kyo', gradient: 'linear-gradient(135deg, #b91c1c 0%, #f472b6 100%)', label: 'Kyoto' },
-  { match: 'van', gradient: 'linear-gradient(135deg, #1d4ed8 0%, #10b981 100%)', label: 'Vancouver' },
+  {
+    match: 'van',
+    gradient: 'linear-gradient(135deg, #1d4ed8 0%, #10b981 100%)',
+    label: 'Vancouver',
+  },
 ]
 
 function themeFor(hotel: Hotel) {
-  return DESTINATION_THEMES.find((theme) => hotel.hotel_id.includes(theme.match)) ?? DESTINATION_THEMES[0]
+  return (
+    DESTINATION_THEMES.find((theme) => hotel.hotel_id.includes(theme.match)) ??
+    DESTINATION_THEMES[0]
+  )
 }
 
 interface CardProps {
@@ -32,7 +39,10 @@ export function HotelCard({ entry, onDetails, onPolicies }: CardProps) {
       <div className="card-image" style={{ background: theme.gradient }}>
         <span className="card-initial">{hotel.name.charAt(0)}</span>
         <span className="card-destination">{theme.label}</span>
-        <span className="card-mock" title={`data_source=${hotel.data_source}, is_live=${String(hotel.is_live)}`}>
+        <span
+          className="card-mock"
+          title={`data_source=${hotel.data_source}, is_live=${String(hotel.is_live)}`}
+        >
           mock data
         </span>
       </div>
@@ -40,7 +50,9 @@ export function HotelCard({ entry, onDetails, onPolicies }: CardProps) {
         <header className="card-head">
           <h3>{hotel.name}</h3>
           <div className="card-ratings">
-            <span className="stars" title={`${hotel.star_rating}-star property`}>{'★'.repeat(hotel.star_rating)}</span>
+            <span className="stars" title={`${hotel.star_rating}-star property`}>
+              {'★'.repeat(hotel.star_rating)}
+            </span>
             <span className="guest-rating" title={`${hotel.review_count} reviews`}>
               {hotel.guest_rating.toFixed(1)}
             </span>
@@ -71,7 +83,8 @@ export function HotelCard({ entry, onDetails, onPolicies }: CardProps) {
               </>
             ) : (
               <span className="price-line unavailable">
-                Sold out for these dates{quote.sold_out_dates.length > 0 ? ` (${quote.sold_out_dates.join(', ')})` : ''}
+                Sold out for these dates
+                {quote.sold_out_dates.length > 0 ? ` (${quote.sold_out_dates.join(', ')})` : ''}
               </span>
             )}
           </div>

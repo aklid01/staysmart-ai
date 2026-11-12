@@ -34,12 +34,19 @@ function MessageView({
         <MarkdownLite text={turn.content} />
       </div>
       {response && response.stopped_early && (
-        <p className="notice">The answer was summarized early: the tool budget for this turn ran out.</p>
+        <p className="notice">
+          The answer was summarized early: the tool budget for this turn ran out.
+        </p>
       )}
       {response && response.hotels.length > 0 && (
         <div className="card-grid">
           {response.hotels.map((entry) => (
-            <HotelCard key={entry.hotel.hotel_id} entry={entry} onDetails={onDetails} onPolicies={onPolicies} />
+            <HotelCard
+              key={entry.hotel.hotel_id}
+              entry={entry}
+              onDetails={onDetails}
+              onPolicies={onPolicies}
+            />
           ))}
         </div>
       )}
@@ -87,7 +94,10 @@ export default function App() {
         conversation_id: conversationIdRef.current,
         history,
       })
-      setTurns((current) => [...current, { role: 'assistant', content: response.message, response }])
+      setTurns((current) => [
+        ...current,
+        { role: 'assistant', content: response.message, response },
+      ])
     } catch (exc) {
       const apiError = exc instanceof ApiError ? exc : new ApiError('unknown_error', String(exc), 0)
       setError(apiError)
@@ -96,7 +106,11 @@ export default function App() {
     }
   }
 
-  const healthLabel = health ? (health.status === 'ok' ? 'API connected' : 'API degraded') : 'API offline'
+  const healthLabel = health
+    ? health.status === 'ok'
+      ? 'API connected'
+      : 'API degraded'
+    : 'API offline'
 
   return (
     <div className="app-shell">
@@ -109,9 +123,14 @@ export default function App() {
           </div>
         </div>
         <div className="header-status">
-          <span className={`health-dot ${health ? (health.status === 'ok' ? 'ok' : 'degraded') : 'offline'}`} />
+          <span
+            className={`health-dot ${health ? (health.status === 'ok' ? 'ok' : 'degraded') : 'offline'}`}
+          />
           <span className="health-label">{healthLabel}</span>
-          <span className="mock-badge" title="All provider data in this MVP is mock data (data_source=mock, is_live=false)">
+          <span
+            className="mock-badge"
+            title="All provider data in this MVP is mock data (data_source=mock, is_live=false)"
+          >
             mock data
           </span>
         </div>
@@ -122,11 +141,14 @@ export default function App() {
           <div className="empty-state">
             <h2>Where would you like to stay?</h2>
             <p>
-              Ask in plain language, for example: <em>Find a hotel in Kyoto for two guests in December under 250
-              with breakfast and wifi.</em>
+              Ask in plain language, for example:{' '}
+              <em>
+                Find a hotel in Kyoto for two guests in December under 250 with breakfast and wifi.
+              </em>
             </p>
             <p className="muted-row">
-              The assistant searches live mock hotel data and can answer policy questions with cited sources.
+              The assistant searches live mock hotel data and can answer policy questions with cited
+              sources.
             </p>
           </div>
         )}
@@ -167,7 +189,11 @@ export default function App() {
           }}
           aria-label="Chat message"
         />
-        <button type="button" onClick={sendMessage} disabled={chatting || draft.trim().length === 0}>
+        <button
+          type="button"
+          onClick={sendMessage}
+          disabled={chatting || draft.trim().length === 0}
+        >
           {chatting ? '...' : 'Send'}
         </button>
       </footer>
@@ -180,7 +206,11 @@ export default function App() {
         />
       )}
       {policyHotelId && (
-        <PolicyDialog key={policyHotelId} hotelId={policyHotelId} onClose={() => setPolicyHotelId(null)} />
+        <PolicyDialog
+          key={policyHotelId}
+          hotelId={policyHotelId}
+          onClose={() => setPolicyHotelId(null)}
+        />
       )}
     </div>
   )

@@ -49,13 +49,7 @@ function roomName(entry: HotelEntry, roomTypeId: string): string {
   return roomOf(entry, roomTypeId)?.name ?? roomTypeId
 }
 
-export function DetailsDialog({
-  entry,
-  onClose,
-}: {
-  entry: HotelEntry
-  onClose: () => void
-}) {
+export function DetailsDialog({ entry, onClose }: { entry: HotelEntry; onClose: () => void }) {
   const hotel = entry.hotel
   const stay = useMemo(
     () =>
@@ -83,13 +77,17 @@ export function DetailsDialog({
 
   return (
     <DialogShell title={`${hotel.name} - details`} onClose={onClose}>
-      {error && <p className="error-banner">[{error.code}] {error.message}</p>}
+      {error && (
+        <p className="error-banner">
+          [{error.code}] {error.message}
+        </p>
+      )}
       {!error && !details && <p className="loading-row">Loading details...</p>}
       {details && (
         <>
           <p className="muted-row">
-            {details.check_in} to {details.check_out} · {details.rooms} room(s), {details.guests} guests ·{' '}
-            {details.currency} · mock data
+            {details.check_in} to {details.check_out} · {details.rooms} room(s), {details.guests}{' '}
+            guests · {details.currency} · mock data
           </p>
           <p>{details.hotel.description}</p>
           <table className="details-table">
@@ -115,7 +113,9 @@ export function DetailsDialog({
                     <td>
                       {quote.nights_available}/{quote.nights}
                     </td>
-                    <td>{quote.avg_nightly_rate == null ? '-' : quote.avg_nightly_rate.toFixed(2)}</td>
+                    <td>
+                      {quote.avg_nightly_rate == null ? '-' : quote.avg_nightly_rate.toFixed(2)}
+                    </td>
                     <td>{quote.total_price == null ? '-' : quote.total_price.toFixed(2)}</td>
                     <td>
                       {quote.available
@@ -160,7 +160,11 @@ export function PolicyDialog({ hotelId, onClose }: { hotelId: string; onClose: (
 
   return (
     <DialogShell title={`Policies - ${policy?.hotel_name ?? hotelId}`} onClose={onClose}>
-      {error && <p className="error-banner">[{error.code}] {error.message}</p>}
+      {error && (
+        <p className="error-banner">
+          [{error.code}] {error.message}
+        </p>
+      )}
       {!error && !policy && <p className="loading-row">Loading policies...</p>}
       {policy && (
         <>

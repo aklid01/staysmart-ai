@@ -7,8 +7,8 @@ export function ComparisonTable({ comparison }: { comparison: HotelComparison })
   return (
     <div className="comparison-block" data-testid="comparison-table">
       <div className="comparison-context">
-        {comparison.check_in} to {comparison.check_out} · {comparison.rooms} room(s), {comparison.guests} guests ·{' '}
-        {comparison.currency} · mock data
+        {comparison.check_in} to {comparison.check_out} · {comparison.rooms} room(s),{' '}
+        {comparison.guests} guests · {comparison.currency} · mock data
       </div>
       <div className="table-scroll">
         <table>

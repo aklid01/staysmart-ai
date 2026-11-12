@@ -23,7 +23,11 @@ export function ToolTraceChips({ trace }: { trace: ToolTraceEntry[] }) {
   return (
     <div className="tool-trace">
       {trace.map((entry, index) => (
-        <span key={index} className={`tool-chip status-${entry.status}`} title={`status: ${entry.status}`}>
+        <span
+          key={index}
+          className={`tool-chip status-${entry.status}`}
+          title={`status: ${entry.status}`}
+        >
           {entry.tool}
         </span>
       ))}
