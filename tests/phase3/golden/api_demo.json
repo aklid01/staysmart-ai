@@ -250,7 +250,6 @@
     },
     "health": {
       "body": {
-        "connected": true,
         "currency": "USD",
         "data_source": "mock",
         "is_live": false,
