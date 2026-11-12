@@ -19,6 +19,9 @@ class Settings:
     log_level: str = "INFO"
     currency: str = "USD"
     window_days: int = 365
+    http_host: str = "127.0.0.1"
+    http_port: int = 8000
+    cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173")
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
@@ -45,12 +48,34 @@ class Settings:
         if window_days < 1:
             raise ProviderError("STAYSMART_WINDOW_DAYS must be at least 1")
 
+        http_host = source.get("STAYSMART_HTTP_HOST", "127.0.0.1")
+
+        raw_port = source.get("STAYSMART_HTTP_PORT", "8000")
+        try:
+            http_port = int(raw_port)
+        except ValueError as exc:
+            raise ProviderError(f"STAYSMART_HTTP_PORT must be an integer, got {raw_port!r}") from exc
+        if not 1 <= http_port <= 65535:
+            raise ProviderError(f"STAYSMART_HTTP_PORT must be between 1 and 65535, got {http_port}")
+
+        cors_origins = tuple(
+            origin.strip()
+            for origin in source.get(
+                "STAYSMART_CORS_ORIGINS",
+                "http://localhost:5173,http://127.0.0.1:5173",
+            ).split(",")
+            if origin.strip()
+        )
+
         return cls(
             hotel_provider=provider,
             dataset_path=dataset_path,
             log_level=log_level,
             currency=currency,
             window_days=window_days,
+            http_host=http_host,
+            http_port=http_port,
+            cors_origins=cors_origins,
         )
 
 
