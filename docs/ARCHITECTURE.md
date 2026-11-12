@@ -2,7 +2,7 @@
 
 ## Implementation status
 
-Read this first. Phases 0 through 3 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
+Read this first. Phases 0 through 4 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
 
 | Component | Phase | Status |
 | --- | --- | --- |
@@ -10,20 +10,21 @@ Read this first. Phases 0 through 3 are implemented. Everything marked "not yet 
 | Domain models, config loader, mock dataset, inventory, provider | 1 | Implemented |
 | Service layer, MCP server and five tools | 2 | Implemented |
 | Starlette app and MCP client | 3 | Implemented |
-| RAG ingestion, indexing and retrieval | 4 | Not yet implemented |
+| RAG ingestion, indexing and retrieval | 4 | Implemented |
 | LLM agent orchestration | 5 | Not yet implemented |
 | TypeScript frontend | 6 | Not yet implemented |
 
 ## Layering
 
-Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG is a separate retrieval channel for descriptive context and will never supply prices or availability. The LLM agent will sit above the tools through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
+Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG (`src/staysmart/rag/`) is a separate retrieval channel for descriptive context: it depends on domain models only, is never wired through the MCP tools, and never supplies prices or availability. The LLM agent will sit above both channels through a configurable OpenAI-compatible endpoint. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
 
 ```mermaid
 flowchart TD
   FE["Frontend TS - Phase 6, planned"] -->|HTTP| APP["Starlette app + MCP client - implemented"]
   APP -->|"stdio tool calls"| TOOLS["MCP tools - implemented"]
   AGENT["LLM agent - Phase 5, planned"] --> TOOLS
-  RAG["RAG retrieval - Phase 4, planned"] -.->|"context only"| AGENT
+  AGENT -.->|"grounded context"| RAG["RAG retrieval - implemented"]
+  RAG --> CORPUS["data/knowledge/v1 - implemented"]
   TOOLS --> SVC["Service layer - implemented"]
   SVC --> PROTO["HotelProvider Protocol - implemented"]
   MOCK["MockHotelProvider - implemented"] -.->|implements| PROTO
@@ -62,6 +63,15 @@ flowchart TD
 | `src/staysmart/app/__main__.py` | `python -m staysmart.app` uvicorn entrypoint. |
 | `scripts/demo_api.py` | Launches a real uvicorn server on an ephemeral port with the stdio connector, calls every endpoint and writes `artifacts/api_demo.json`. |
 | `tests/phase3/` | Behavioral contract, 33 pytest tests (health, endpoints, error mapping, CORS, real stdio transport, snapshot), spec-authored golden artifact. |
+| `data/knowledge/v1/` | 53 authored markdown knowledge documents (5 categories per hotel plus a check-in/check-out guide per destination) with frontmatter metadata, fact-pinned to the mock dataset by tests. |
+| `src/staysmart/rag/corpus.py` | Frontmatter parsing, category-to-filename validation, unique doc ids, hotel/destination placement, corpus loading in deterministic order. |
+| `src/staysmart/rag/chunking.py` | Heading-based sectioning, 600-character paragraph-boundary splitting, chunk metadata with sequential ids and embedded-text composition. |
+| `src/staysmart/rag/embedder.py` | `Embedder` protocol, `FastEmbedEmbedder` (`BAAI/bge-small-en-v1.5`, 384 dims, unit-normalized) and an offline `DeterministicEmbedder` for tests. |
+| `src/staysmart/rag/index.py` | Local vector index (`vectors.npy` + `chunks.json`), metadata filtering, cosine ranking, deterministic tie-breaking, save/load with validation. |
+| `src/staysmart/rag/ingest.py` | Corpus-to-index build pipeline including dataset-driven destination enrichment, plus the `python -m staysmart.rag ingest` entrypoint. |
+| `src/staysmart/rag/service.py` | `RagRetriever.retrieve` (filtered semantic search) and `build_context` (numbered context blocks plus per-document sources). |
+| `scripts/demo_rag.py` | Ingests the corpus with FastEmbed, runs six pinned retrieval scenarios and writes `artifacts/rag_demo.json`. |
+| `tests/phase4/` | Behavioral contract, 42 pytest tests (corpus validation, dataset consistency, chunking, index, retrieval, real-model snapshot), golden artifact. |
 
 ### Search flow as implemented
 
@@ -84,7 +94,6 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 
 | Component | Responsibility |
 | --- | --- |
-| `src/staysmart/rag/` | Document ingestion, chunking, FastEmbed embeddings, local vector index, retrieval, source attribution. |
 | `src/staysmart/agent/` | Natural-language interpretation, tool selection, sequential tool calls, grounded response generation, safeguards. |
 | `frontend/` | Presentation and user interaction only. |
 
@@ -93,12 +102,12 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 - Every hotel result carries `data_source="mock"` and `is_live=False`, so mock data is never confused with live inventory.
 - A validated `HotelSearchQuery` exists before any hotel search operation.
 - No hotel fact, price or availability value is invented. Missing availability is reported as missing.
-- Structured hotel search and RAG retrieval stay separate. Live prices and availability never come from RAG documents.
+- Structured hotel search and RAG retrieval stay separate channels. Live prices and availability never come from RAG documents, and the corpus consistency tests pin knowledge facts to the dataset.
 - MCP communication over stdio stays separate from the frontend HTTP interface: the browser only ever talks to the Starlette layer, and each HTTP data operation maps to one MCP tool call.
 - The HTTP layer holds no hotel business logic: request models mirror tool inputs, and success payloads pass through unchanged.
 - The provider interface is replaceable. A real connectivity provider can implement the same Protocol later.
 - No reservations, payments or booking transactions.
 
-## Data flow (as of Phase 3)
+## Data flow (as of Phase 4)
 
-HTTP requests arrive at the Starlette layer, where request models validate shape (`extra="forbid"`, positive guests and rooms). Each data endpoint forwards its arguments through one MCP tool call over the stdio session and returns the tool payload verbatim. Tool failures carry the provider message, which the HTTP classifier maps to 404, 400 or 502; MCP session failures become 503. In Phase 5 a user message will additionally be interpreted into validated structured queries by the LLM agent, which will choose MCP tools, call them over stdio, and combine provider facts with retrieved policy context before generating a grounded response. The frontend (Phase 6) will render result cards, comparison views, details, policy sources, and loading or error states from this JSON.
+HTTP requests arrive at the Starlette layer, where request models validate shape (`extra="forbid"`, positive guests and rooms). Each data endpoint forwards its arguments through one MCP tool call over the stdio session and returns the tool payload verbatim. Tool failures carry the provider message, which the HTTP classifier maps to 404, 400 or 502; MCP session failures become 503. Separately, the RAG channel ingests the authored corpus into a local vector index and serves filtered semantic retrieval with per-document sources for the Phase 5 agent, which will combine provider facts with retrieved context in grounded responses. The frontend (Phase 6) will render result cards, comparison views, details, policy sources, and loading or error states from this JSON.
