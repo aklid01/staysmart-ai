@@ -12,6 +12,7 @@ dependencies = [
     "uvicorn>=0.30",
     "fastembed>=0.3",
     "numpy>=1.26",
+    "openai>=1.40",
 ]
 
 [dependency-groups]

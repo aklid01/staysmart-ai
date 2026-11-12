@@ -3,17 +3,21 @@ import logging
 from datetime import date
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
+from staysmart.agent.agent import HotelAgent
 from staysmart.app.errors import ApiError, classify_tool_failure, invalid_json_error, unavailable_error
 from staysmart.app.mcp_client import ToolFailureError
 from staysmart.config import Settings
 from staysmart.domain.models import Amenity
 from staysmart.mcp_server.server import SERVER_NAME
+from staysmart.rag.embedder import FastEmbedEmbedder
+from staysmart.rag.errors import RagError
+from staysmart.rag.service import RagRetriever
 
 logger = logging.getLogger("staysmart")
 
@@ -66,6 +70,12 @@ class ChatRequest(_RequestModel):
     message: str = Field(min_length=1)
     conversation_id: str | None = None
     history: list[ChatMessage] = []
+
+    @model_validator(mode="after")
+    def validate_message(self) -> "ChatRequest":
+        if not self.message.strip():
+            raise ValueError("message must not be blank")
+        return self
 
 
 async def _json_model(request: Request, model_cls: type[BaseModel]) -> BaseModel:
@@ -156,13 +166,37 @@ async def compare_hotels(request: Request) -> JSONResponse:
 
 
 async def chat(request: Request) -> JSONResponse:
-    await _json_model(request, ChatRequest)
-    raise ApiError(
-        501,
-        "agent_not_available",
-        "The LLM agent is not implemented yet; chat arrives in Phase 5.",
-        "AgentNotAvailableError",
+    payload = await _json_model(request, ChatRequest)
+    agent = _get_agent(request)
+    result = await agent.run(
+        payload.message,
+        history=[entry.model_dump() for entry in payload.history],
+        session=request.app.state.mcp,
+        conversation_id=payload.conversation_id,
     )
+    return JSONResponse(result.model_dump(mode="json"))
+
+
+def _get_agent(request: Request) -> HotelAgent:
+    app = request.app
+    agent = getattr(app.state, "agent", None)
+    if agent is not None:
+        return agent
+    if app.state.retriever is None:
+        try:
+            app.state.retriever = RagRetriever.load(
+                app.state.settings.rag_index_path,
+                FastEmbedEmbedder(app.state.settings.rag_model),
+            )
+        except RagError as exc:
+            raise ApiError(
+                503,
+                "rag_unavailable",
+                f"{exc.message} Run 'python -m staysmart.rag ingest' first.",
+                "RagUnavailableError",
+            ) from exc
+    app.state.agent = HotelAgent(app.state.llm, app.state.retriever)
+    return app.state.agent
 
 
 def register_routes(app: Starlette) -> None:

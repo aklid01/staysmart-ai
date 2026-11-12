@@ -13,6 +13,8 @@ DEFAULT_DATASET_PATH = PROJECT_ROOT / "data" / "hotels" / "v1" / "hotels.json"
 DEFAULT_RAG_CORPUS_PATH = PROJECT_ROOT / "data" / "knowledge" / "v1"
 DEFAULT_RAG_INDEX_PATH = PROJECT_ROOT / "data" / "rag" / "index"
 DEFAULT_RAG_MODEL = "BAAI/bge-small-en-v1.5"
+DEFAULT_LLM_BASE_URL = "http://127.0.0.1:3425/v1"
+DEFAULT_LLM_MODEL = "auto/glm-5.3-flash"
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,9 @@ class Settings:
     rag_corpus_path: Path = DEFAULT_RAG_CORPUS_PATH
     rag_index_path: Path = DEFAULT_RAG_INDEX_PATH
     rag_model: str = DEFAULT_RAG_MODEL
+    llm_base_url: str = DEFAULT_LLM_BASE_URL
+    llm_api_key: str = ""
+    llm_model: str = DEFAULT_LLM_MODEL
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
@@ -81,6 +86,14 @@ class Settings:
         if not rag_model:
             raise ProviderError("STAYSMART_RAG_MODEL must not be empty")
 
+        llm_base_url = source.get("LLM_BASE_URL", DEFAULT_LLM_BASE_URL).strip().rstrip("/")
+        if not llm_base_url.endswith("/v1"):
+            llm_base_url = f"{llm_base_url}/v1"
+        llm_api_key = source.get("LLM_API_KEY", "")
+        llm_model = source.get("LLM_MODEL", DEFAULT_LLM_MODEL).strip()
+        if not llm_model:
+            raise ProviderError("LLM_MODEL must not be empty")
+
         return cls(
             hotel_provider=provider,
             dataset_path=dataset_path,
@@ -93,6 +106,9 @@ class Settings:
             rag_corpus_path=rag_corpus_path,
             rag_index_path=rag_index_path,
             rag_model=rag_model,
+            llm_base_url=llm_base_url,
+            llm_api_key=llm_api_key,
+            llm_model=llm_model,
         )
 
 

@@ -8,6 +8,10 @@ from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from staysmart.agent.errors import LLMUnavailableError
+from staysmart.domain.errors import StaySmartError
+from staysmart.rag.errors import RagError
+
 logger = logging.getLogger("staysmart")
 
 
@@ -76,12 +80,24 @@ def install_error_handlers(app: Starlette) -> None:
     app.add_exception_handler(ApiError, _handle_api_error)
     app.add_exception_handler(json.JSONDecodeError, _handle_invalid_json)
     app.add_exception_handler(ValidationError, _handle_validation_error)
+    app.add_exception_handler(StaySmartError, _handle_stay_smart_error)
     app.add_exception_handler(HTTPException, _handle_http_exception)
     app.add_exception_handler(Exception, _handle_unexpected)
 
 
 async def _handle_api_error(request: Request, exc: ApiError) -> JSONResponse:
     return JSONResponse(exc.to_dict(), status_code=exc.status_code)
+
+
+async def _handle_stay_smart_error(request: Request, exc: StaySmartError) -> JSONResponse:
+    if isinstance(exc, LLMUnavailableError):
+        status_code, code = 503, "llm_unavailable"
+    elif isinstance(exc, RagError):
+        status_code, code = 503, "rag_unavailable"
+    else:
+        status_code, code = 500, exc.code
+    body = {"error": {"code": code, "message": exc.message, "error_type": type(exc).__name__}}
+    return JSONResponse(body, status_code=status_code)
 
 
 async def _handle_invalid_json(request: Request, exc: json.JSONDecodeError) -> JSONResponse:
