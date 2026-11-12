@@ -47,9 +47,7 @@ def dataset_path():
 def stub_index(tmp_path):
     dataset = load_dataset(DATASET_PATH)
     destination_by_hotel = {hotel.hotel_id: hotel.destination_id for hotel in dataset.hotels}
-    return build_index(
-        CORPUS_PATH, tmp_path / "index", DeterministicEmbedder(), destination_by_hotel
-    )
+    return build_index(CORPUS_PATH, tmp_path / "index", DeterministicEmbedder(), destination_by_hotel)
 
 
 @pytest.fixture

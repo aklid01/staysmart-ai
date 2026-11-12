@@ -130,8 +130,7 @@ AGENT_TOOLS: list[dict] = [
         "function": {
             "name": "get_hotel_policies",
             "description": (
-                "Grounded policy facts for one hotel: cancellation terms, pet policy and explicit "
-                "information gaps."
+                "Grounded policy facts for one hotel: cancellation terms, pet policy and explicit information gaps."
             ),
             "parameters": {
                 "type": "object",

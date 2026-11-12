@@ -8,8 +8,6 @@ from staysmart.agent.agent import HotelAgent
 from staysmart.agent.llm import OpenAICompatLLM
 from staysmart.app.mcp_client import SdkMcpSession
 from staysmart.config import PROJECT_ROOT, Settings, configure_logging
-
-logger = logging.getLogger("staysmart")
 from staysmart.mcp_server.server import build_mcp_server
 from staysmart.providers.mock.dataset import load_dataset
 from staysmart.providers.mock.provider import get_provider
@@ -18,12 +16,15 @@ from staysmart.rag.embedder import FastEmbedEmbedder
 from staysmart.rag.ingest import build_index
 from staysmart.rag.service import RagRetriever
 
+logger = logging.getLogger("staysmart")
+
 ARTIFACT_PATH = PROJECT_ROOT / "artifacts" / "agent_demo.json"
 
 SCENARIOS = [
     (
         "search_kyoto",
-        "Find hotels in Kyoto for two guests from December 4 to 7, 2026, under 250 USD per night, with wifi and breakfast.",
+        "Find hotels in Kyoto for two guests from December 4 to 7, 2026, "
+        "under 250 USD per night, with wifi and breakfast.",
     ),
     (
         "policy_kyoto",
@@ -31,7 +32,8 @@ SCENARIOS = [
     ),
     (
         "compare_lisbon",
-        "Compare Alfama Riverside Boutique and Baixa Central Hotel for December 4-7, 2026 and recommend one for a budget traveller.",
+        "Compare Alfama Riverside Boutique and Baixa Central Hotel for December 4-7, 2026 "
+        "and recommend one for a budget traveller.",
     ),
 ]
 

@@ -30,7 +30,9 @@ async def test_search_tool_call_then_grounded_answer(mcp_server, retriever):
                 content=None,
                 tool_calls=[LLMToolCall(id="call-1", name="search_hotels", arguments=KYOTO_SEARCH_ARGS)],
             ),
-            LLMCompletion(content="Gion Machiya Stay is the only Kyoto hotel under 250 USD with those amenities.", tool_calls=[]),
+            LLMCompletion(
+                content="Gion Machiya Stay is the only Kyoto hotel under 250 USD with those amenities.", tool_calls=[]
+            ),
         ]
     )
 
@@ -38,9 +40,7 @@ async def test_search_tool_call_then_grounded_answer(mcp_server, retriever):
 
     assert result.message.startswith("Gion Machiya Stay")
     assert result.stopped_early is False
-    assert [entry.model_dump() for entry in result.tool_trace] == [
-        {"tool": "search_hotels", "status": "ok"}
-    ]
+    assert [entry.model_dump() for entry in result.tool_trace] == [{"tool": "search_hotels", "status": "ok"}]
     assert {entry["hotel"]["hotel_id"] for entry in result.hotels} == {
         "hotel-kyo-01",
         "hotel-kyo-02",
@@ -66,7 +66,13 @@ async def test_tool_error_fed_back_then_recovered(mcp_server, retriever):
         [
             LLMCompletion(
                 content=None,
-                tool_calls=[LLMToolCall(id="call-1", name="search_hotels", arguments={"destination": "Atlantis", "check_in": "2026-12-04", "check_out": "2026-12-07"})],
+                tool_calls=[
+                    LLMToolCall(
+                        id="call-1",
+                        name="search_hotels",
+                        arguments={"destination": "Atlantis", "check_in": "2026-12-04", "check_out": "2026-12-07"},
+                    )
+                ],
             ),
             LLMCompletion(
                 content=None,
@@ -148,7 +154,20 @@ async def test_turn_limit_stops_tool_loops_with_forced_summary(mcp_server, retri
 
 
 async def test_tool_budget_limits_executed_calls(mcp_server, retriever):
-    date_pairs = [(4, 5), (5, 6), (6, 7), (7, 8), (8, 9), (9, 10), (10, 11), (11, 12), (12, 13), (13, 14), (14, 15), (15, 16)]
+    date_pairs = [
+        (4, 5),
+        (5, 6),
+        (6, 7),
+        (7, 8),
+        (8, 9),
+        (9, 10),
+        (10, 11),
+        (11, 12),
+        (12, 13),
+        (13, 14),
+        (14, 15),
+        (15, 16),
+    ]
     completions = []
     call_index = 0
     for _turn in range(4):
@@ -180,17 +199,27 @@ async def test_search_knowledge_collects_sources(mcp_server, retriever):
         [
             LLMCompletion(
                 content=None,
-                tool_calls=[LLMToolCall(id="call-1", name="search_knowledge", arguments={"query": "Are dogs and cats allowed at the townhouse?", "hotel_id": "hotel-kyo-01", "category": "pet_policy"})],
+                tool_calls=[
+                    LLMToolCall(
+                        id="call-1",
+                        name="search_knowledge",
+                        arguments={
+                            "query": "Are dogs and cats allowed at the townhouse?",
+                            "hotel_id": "hotel-kyo-01",
+                            "category": "pet_policy",
+                        },
+                    )
+                ],
             ),
-            LLMCompletion(content="Pets are allowed at Gion Machiya Stay [Gion Machiya Stay pet policy].", tool_calls=[]),
+            LLMCompletion(
+                content="Pets are allowed at Gion Machiya Stay [Gion Machiya Stay pet policy].", tool_calls=[]
+            ),
         ]
     )
 
     result = await run_agent(llm, mcp_server, retriever)
 
-    assert [entry.model_dump() for entry in result.tool_trace] == [
-        {"tool": "search_knowledge", "status": "ok"}
-    ]
+    assert [entry.model_dump() for entry in result.tool_trace] == [{"tool": "search_knowledge", "status": "ok"}]
     assert result.sources
     assert "hotel-kyo-01-pet-policy" in {source.doc_id for source in result.sources}
     knowledge_message = llm.requests[1]["messages"][-1]["content"]
@@ -208,7 +237,13 @@ async def test_search_and_details_dedupe_to_details_form(mcp_server, retriever):
             ),
             LLMCompletion(
                 content=None,
-                tool_calls=[LLMToolCall(id="call-2", name="get_hotel_details", arguments={"hotel_id": "hotel-kyo-01", "check_in": "2026-12-04", "check_out": "2026-12-07"})],
+                tool_calls=[
+                    LLMToolCall(
+                        id="call-2",
+                        name="get_hotel_details",
+                        arguments={"hotel_id": "hotel-kyo-01", "check_in": "2026-12-04", "check_out": "2026-12-07"},
+                    )
+                ],
             ),
             LLMCompletion(content="Here are the details.", tool_calls=[]),
         ]

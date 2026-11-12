@@ -1,7 +1,6 @@
+import logging
 from datetime import date
 from typing import Sequence
-
-import logging
 
 from staysmart.domain.errors import InvalidDateError, UnknownHotelError
 from staysmart.domain.models import ComparisonRow, HotelComparison, HotelDetails
@@ -35,12 +34,8 @@ def _verified_text(details: HotelDetails) -> str:
 def _row(details: HotelDetails) -> ComparisonRow:
     hotel = details.hotel
     quotable = [quote for quote in details.room_quotes if quote.nights_available > 0]
-    nightly_price = (
-        min(quote.avg_nightly_rate for quote in quotable) if quotable else None
-    )
-    available_totals = [
-        quote.total_price for quote in details.room_quotes if quote.available
-    ]
+    nightly_price = min(quote.avg_nightly_rate for quote in quotable) if quotable else None
+    available_totals = [quote.total_price for quote in details.room_quotes if quote.available]
     return ComparisonRow(
         hotel_id=hotel.hotel_id,
         name=hotel.name,
@@ -55,14 +50,10 @@ def _row(details: HotelDetails) -> ComparisonRow:
     )
 
 
-def _unmet_preferences(
-    preferences: Sequence[str], verified_texts: list[str]
-) -> list[str]:
+def _unmet_preferences(preferences: Sequence[str], verified_texts: list[str]) -> list[str]:
     verified = " ".join(verified_texts)
     return [
-        f"{PREFERENCE_SCHEME}:{preference}"
-        for preference in preferences
-        if preference.strip().lower() not in verified
+        f"{PREFERENCE_SCHEME}:{preference}" for preference in preferences if preference.strip().lower() not in verified
     ]
 
 

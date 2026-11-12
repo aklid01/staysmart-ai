@@ -20,8 +20,7 @@ def validate_date_window(check_in: date, check_out: date, context: InventoryCont
     nights = (check_out - check_in).days
     if nights < 1 or nights > MAX_STAY_NIGHTS:
         raise InvalidDateError(
-            f"Stay must be between 1 and {MAX_STAY_NIGHTS} nights, got {nights} "
-            f"from {check_in} to {check_out}"
+            f"Stay must be between 1 and {MAX_STAY_NIGHTS} nights, got {nights} from {check_in} to {check_out}"
         )
 
     end_exclusive = context.anchor_date + timedelta(days=context.window_days)
@@ -73,9 +72,7 @@ def inventory_for(
     nights_available = len(nightly_rates)
     available = nights_available == nights
     partially_available = 0 < nights_available < nights
-    avg_nightly_rate = (
-        round(sum(nightly_rates) / nights_available, 2) if nights_available else None
-    )
+    avg_nightly_rate = round(sum(nightly_rates) / nights_available, 2) if nights_available else None
     total_price = round(sum(nightly_rates) * request.rooms, 2) if available else None
 
     return StayQuote(

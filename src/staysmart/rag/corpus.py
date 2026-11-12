@@ -86,9 +86,7 @@ def load_corpus(corpus_path: Path) -> list[KnowledgeDocument]:
         if filename not in CATEGORY_BY_FILENAME:
             raise RagError(f"{relative}: unrecognized knowledge document name")
         if fields["category"] != CATEGORY_BY_FILENAME[filename]:
-            raise RagError(
-                f"{relative}: category {fields['category']!r} does not match file name {filename!r}"
-            )
+            raise RagError(f"{relative}: category {fields['category']!r} does not match file name {filename!r}")
         if fields["doc_id"] in seen:
             raise RagError(f"{relative}: duplicate doc_id {fields['doc_id']!r}")
         seen.add(fields["doc_id"])

@@ -60,9 +60,7 @@ class MockHotelProvider:
         destination_ids = self._match_destinations(query.destination)
         if not destination_ids:
             logger.warning("search rejected unknown destination=%s", query.destination)
-            raise UnknownDestinationError(
-                f"No destination matches {query.destination!r} in the mock dataset"
-            )
+            raise UnknownDestinationError(f"No destination matches {query.destination!r} in the mock dataset")
 
         required = set(query.amenities)
         hits: list[HotelSearchHit] = []
@@ -88,8 +86,7 @@ class MockHotelProvider:
                     query.currency,
                 )
                 if query.max_nightly_budget is not None and (
-                    quote.avg_nightly_rate is None
-                    or quote.avg_nightly_rate > query.max_nightly_budget
+                    quote.avg_nightly_rate is None or quote.avg_nightly_rate > query.max_nightly_budget
                 ):
                     continue
                 quotes.append(quote)
@@ -106,9 +103,7 @@ class MockHotelProvider:
                 ),
             )
             matched = sorted(item.value for item in required if item in hotel.amenities)
-            hits.append(
-                HotelSearchHit(hotel=hotel, quote=best, matched_amenities=matched)
-            )
+            hits.append(HotelSearchHit(hotel=hotel, quote=best, matched_amenities=matched))
 
         hits.sort(
             key=lambda hit: (
@@ -146,8 +141,7 @@ class MockHotelProvider:
         validate_date_window(start, end, self._context)
 
         quotes = [
-            self._quote(hotel, room, start, end, rooms, guests, self._settings.currency)
-            for room in hotel.room_types
+            self._quote(hotel, room, start, end, rooms, guests, self._settings.currency) for room in hotel.room_types
         ]
         logger.info("details hotel_id=%s room_types=%d", hotel_id, len(quotes))
         return HotelDetails(
@@ -180,14 +174,10 @@ class MockHotelProvider:
                 room_type_id,
                 hotel_id,
             )
-            raise UnknownRoomTypeError(
-                f"Unknown room_type_id {room_type_id!r} for hotel {hotel_id!r}"
-            )
+            raise UnknownRoomTypeError(f"Unknown room_type_id {room_type_id!r} for hotel {hotel_id!r}")
 
         validate_date_window(check_in, check_out, self._context)
-        quote = self._quote(
-            hotel, room, check_in, check_out, rooms, 2, self._settings.currency
-        )
+        quote = self._quote(hotel, room, check_in, check_out, rooms, 2, self._settings.currency)
         logger.info(
             "availability hotel_id=%s room_type_id=%s nights_available=%d/%d",
             hotel_id,
@@ -240,8 +230,7 @@ class MockHotelProvider:
     def _validate_currency(self, currency: str) -> None:
         if currency.upper() != self._dataset.currency.upper():
             raise CurrencyMismatchError(
-                f"Query currency {currency!r} does not match mock dataset currency "
-                f"{self._dataset.currency!r}"
+                f"Query currency {currency!r} does not match mock dataset currency {self._dataset.currency!r}"
             )
 
     def _match_destinations(self, destination: str) -> set[str]:
@@ -258,9 +247,7 @@ class MockHotelProvider:
                 matched.add(item.destination_id)
         return matched
 
-    def _unmet_preferences(
-        self, query: HotelSearchQuery, hits: list[HotelSearchHit]
-    ) -> list[str]:
+    def _unmet_preferences(self, query: HotelSearchQuery, hits: list[HotelSearchHit]) -> list[str]:
         if not hits:
             messages = [f"no_hotels_matched:{query.destination}"]
             if query.max_nightly_budget is not None:
@@ -292,7 +279,5 @@ class MockHotelProvider:
 
 def get_provider(settings: Settings) -> HotelProvider:
     if settings.hotel_provider != "mock":
-        raise ProviderError(
-            f"Unsupported hotel provider {settings.hotel_provider!r}; only 'mock' is available"
-        )
+        raise ProviderError(f"Unsupported hotel provider {settings.hotel_provider!r}; only 'mock' is available")
     return MockHotelProvider(settings)

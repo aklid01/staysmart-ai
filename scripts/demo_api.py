@@ -299,12 +299,8 @@ async def run() -> dict:
                         "check_out": "2026-12-04",
                     },
                 ),
-                "empty_compare_hotel_ids": record(
-                    client, "POST", "/api/compare", json={"hotel_ids": [], **STAY_DATES}
-                ),
-                "validation_missing_destination": record(
-                    client, "POST", "/api/search", json=STAY_DATES
-                ),
+                "empty_compare_hotel_ids": record(client, "POST", "/api/compare", json={"hotel_ids": [], **STAY_DATES}),
+                "validation_missing_destination": record(client, "POST", "/api/search", json=STAY_DATES),
                 "chat_empty_message": record(client, "POST", "/api/chat", json={"message": ""}),
             }
     finally:
@@ -343,10 +339,7 @@ def main() -> None:
     ARTIFACT_PATH.parent.mkdir(parents=True, exist_ok=True)
     ARTIFACT_PATH.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote {ARTIFACT_PATH}")
-    statuses = {
-        key: record["status"]
-        for key, record in {**payload["requests"], **payload["errors"]}.items()
-    }
+    statuses = {key: record["status"] for key, record in {**payload["requests"], **payload["errors"]}.items()}
     print(f"statuses={statuses}")
 
 

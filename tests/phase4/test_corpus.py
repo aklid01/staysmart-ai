@@ -76,7 +76,8 @@ def write_doc(tmp_path, text):
 def test_unknown_frontmatter_key_is_rejected(tmp_path):
     write_doc(
         tmp_path,
-        "---\ndoc_id: x\ncategory: general\ntitle: t\nhotel_id: hotel-xxx-99\nnotes: extra\n---\n\n## Section\n\nBody text.\n",
+        "---\ndoc_id: x\ncategory: general\ntitle: t\nhotel_id: hotel-xxx-99\n"
+        "notes: extra\n---\n\n## Section\n\nBody text.\n",
     )
 
     with pytest.raises(RagError, match="notes"):

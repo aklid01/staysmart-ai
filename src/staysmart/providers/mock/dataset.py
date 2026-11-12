@@ -49,13 +49,10 @@ def _validate_references(parsed: DatasetFile) -> None:
     room_keys: set[str] = set()
     for hotel in parsed.hotels:
         if hotel.destination_id not in destination_ids:
-            raise ValueError(
-                f"hotel {hotel.hotel_id} references unknown destination {hotel.destination_id}"
-            )
+            raise ValueError(f"hotel {hotel.hotel_id} references unknown destination {hotel.destination_id}")
         if hotel.currency != parsed.currency:
             raise ValueError(
-                f"hotel {hotel.hotel_id} currency {hotel.currency} "
-                f"differs from dataset currency {parsed.currency}"
+                f"hotel {hotel.hotel_id} currency {hotel.currency} differs from dataset currency {parsed.currency}"
             )
         for room in hotel.room_types:
             room_keys.add(f"{hotel.hotel_id}|{room.room_type_id}")
@@ -68,9 +65,7 @@ def _validate_references(parsed: DatasetFile) -> None:
 
     for destination_id, values in parsed.blackout_dates.items():
         if destination_id not in destination_ids:
-            raise ValueError(
-                f"blackout_dates references unknown destination {destination_id}"
-            )
+            raise ValueError(f"blackout_dates references unknown destination {destination_id}")
         for value in values:
             date.fromisoformat(value)
 
@@ -92,12 +87,8 @@ def load_dataset(path: Path) -> MockDataset:
         currency=parsed.currency,
         anchor_date=parsed.anchor_date,
         window_days=parsed.window_days,
-        sold_out_overrides={
-            key: frozenset(values) for key, values in parsed.sold_out_overrides.items()
-        },
-        blackout_dates={
-            key: frozenset(values) for key, values in parsed.blackout_dates.items()
-        },
+        sold_out_overrides={key: frozenset(values) for key, values in parsed.sold_out_overrides.items()},
+        blackout_dates={key: frozenset(values) for key, values in parsed.blackout_dates.items()},
     )
     return MockDataset(
         schema_version=parsed.schema_version,

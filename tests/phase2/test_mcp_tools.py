@@ -1,8 +1,7 @@
 import pytest
+from mcp import Client
 from pydantic import ValidationError
 
-from mcp import Client
-from staysmart.config import Settings
 from staysmart.domain.models import (
     AvailabilityResult,
     HotelComparison,
@@ -137,9 +136,7 @@ async def test_search_hotels_reversed_dates_are_an_error_result(mcp_server):
         )
 
         assert result.is_error is True
-        assert result.content[0].text == (
-            "Error executing tool search_hotels: check_out must be after check_in"
-        )
+        assert result.content[0].text == ("Error executing tool search_hotels: check_out must be after check_in")
 
 
 async def test_search_hotels_dates_beyond_the_window_are_an_error_result(mcp_server):
@@ -275,8 +272,7 @@ async def test_check_availability_unknown_room_type_is_an_error_result(mcp_serve
 
         assert result.is_error is True
         assert result.content[0].text == (
-            "Error executing tool check_availability: Unknown room_type_id "
-            "'room-lis-02-suite' for hotel 'hotel-lis-02'"
+            "Error executing tool check_availability: Unknown room_type_id 'room-lis-02-suite' for hotel 'hotel-lis-02'"
         )
 
 

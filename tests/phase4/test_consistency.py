@@ -29,7 +29,14 @@ CHECK_IN_TIMES = {"lisbon-pt": ("15:00", "11:00"), "kyoto-jp": ("15:00", "10:00"
 
 UNTIL_PATTERN = re.compile(r"until (\d+) days? before check-in")
 PENALTY_PATTERN = re.compile(r"(\d+)-night penalty")
-DENYLIST_PATTERNS = [re.compile(r"\$\s*\d"), re.compile(r"\bper night\b"), re.compile(r"\btotal price\b"), re.compile(r"\bnightly rate\b"), re.compile(r"\bsold out\b"), re.compile(r"\brooms left\b")]
+DENYLIST_PATTERNS = [
+    re.compile(r"\$\s*\d"),
+    re.compile(r"\bper night\b"),
+    re.compile(r"\btotal price\b"),
+    re.compile(r"\bnightly rate\b"),
+    re.compile(r"\bsold out\b"),
+    re.compile(r"\brooms left\b"),
+]
 
 
 def corpus_maps(corpus_path, settings):

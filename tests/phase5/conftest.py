@@ -59,9 +59,7 @@ def mcp_server(provider, settings):
 
 @pytest.fixture
 def stub_index(tmp_path, destination_by_hotel):
-    return build_index(
-        CORPUS_PATH, tmp_path / "index", DeterministicEmbedder(), destination_by_hotel
-    )
+    return build_index(CORPUS_PATH, tmp_path / "index", DeterministicEmbedder(), destination_by_hotel)
 
 
 @pytest.fixture

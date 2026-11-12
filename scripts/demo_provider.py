@@ -1,7 +1,6 @@
 import asyncio
 import json
 from datetime import date
-from pathlib import Path
 
 from staysmart.config import PROJECT_ROOT, Settings
 from staysmart.domain.models import Amenity, HotelSearchQuery, StayQuote
@@ -143,9 +142,7 @@ async def run() -> None:
     details = await provider.get_hotel_details(
         "hotel-lis-01", check_in=CHECK_IN, check_out=CHECK_OUT, rooms=1, guests=2
     )
-    availability = await provider.check_availability(
-        "hotel-van-03", "room-van-03-std", CHECK_IN, CHECK_OUT, rooms=1
-    )
+    availability = await provider.check_availability("hotel-van-03", "room-van-03-std", CHECK_IN, CHECK_OUT, rooms=1)
 
     payload = {
         "artifact_version": 1,

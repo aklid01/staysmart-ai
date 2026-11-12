@@ -107,15 +107,12 @@ class HotelAgent:
                             "role": "tool",
                             "tool_call_id": call.id,
                             "content": (
-                                f"Error: you already called {call.name} with these arguments. "
-                                "Use the earlier result."
+                                f"Error: you already called {call.name} with these arguments. Use the earlier result."
                             ),
                         }
                     )
                     continue
-                payload, status = await execute_agent_tool(
-                    call.name, call.arguments, session, self._retriever
-                )
+                payload, status = await execute_agent_tool(call.name, call.arguments, session, self._retriever)
                 executed_keys.add(key)
                 executed_count += 1
                 trace.append(TraceEntry(tool=call.name, status=status))

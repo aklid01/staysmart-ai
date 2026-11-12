@@ -60,9 +60,7 @@ def test_e2e_snapshot_matches_spec_authored_golden(golden_path, artifact_path, d
     assert errors["unknown_destination_search"]["message"].endswith(
         "No destination matches 'Atlantis' in the mock dataset"
     )
-    assert errors["unknown_hotel_details"]["message"].endswith(
-        "Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
-    )
+    assert errors["unknown_hotel_details"]["message"].endswith("Unknown hotel_id 'hotel-xxx-99' in the mock dataset")
     assert errors["invalid_dates_availability"]["message"].endswith(
         "Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04"
     )

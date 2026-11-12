@@ -70,10 +70,7 @@ def invalid_json_error() -> ApiError:
 
 
 def _validation_details(exc: ValidationError) -> list[dict[str, Any]]:
-    return [
-        {"loc": list(error["loc"]), "msg": error["msg"], "type": error["type"]}
-        for error in exc.errors()
-    ]
+    return [{"loc": list(error["loc"]), "msg": error["msg"], "type": error["type"]} for error in exc.errors()]
 
 
 def install_error_handlers(app: Starlette) -> None:

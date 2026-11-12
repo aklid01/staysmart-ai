@@ -1,6 +1,5 @@
 import contextlib
 
-from pydantic import ValidationError
 from starlette.testclient import TestClient
 
 from staysmart.agent.errors import LLMUnavailableError
@@ -114,7 +113,9 @@ def test_unknown_destination_maps_to_404(client):
 
 
 def test_reversed_search_dates_map_to_400(client):
-    response = client.post("/api/search", json={"destination": "Kyoto", "check_in": "2026-12-07", "check_out": "2026-12-04"})
+    response = client.post(
+        "/api/search", json={"destination": "Kyoto", "check_in": "2026-12-07", "check_out": "2026-12-04"}
+    )
 
     assert response.status_code == 400
     error = response.json()["error"]
@@ -143,9 +144,7 @@ def test_missing_destination_returns_validation_error(client):
     assert error["code"] == "validation_error"
     assert error["error_type"] == "ValidationError"
     assert error["message"] == "Request validation failed"
-    assert error["details"] == [
-        {"loc": ["destination"], "msg": "Field required", "type": "missing"}
-    ]
+    assert error["details"] == [{"loc": ["destination"], "msg": "Field required", "type": "missing"}]
 
 
 def test_unknown_amenity_returns_validation_error(client):

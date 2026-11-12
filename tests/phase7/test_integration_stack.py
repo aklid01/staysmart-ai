@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from staysmart.agent.llm import LLMCompletion, LLMToolCall
@@ -64,8 +63,7 @@ def test_full_journey_across_every_layer(full_client):
     card_ids = {entry["hotel"]["hotel_id"] for entry in body["hotels"]}
     assert card_ids and card_ids <= dataset_ids
     assert all(
-        entry["hotel"]["data_source"] == "mock" and entry["hotel"]["is_live"] is False
-        for entry in body["hotels"]
+        entry["hotel"]["data_source"] == "mock" and entry["hotel"]["is_live"] is False for entry in body["hotels"]
     )
     assert any(source["category"] == "check_in_check_out" for source in body["sources"])
 

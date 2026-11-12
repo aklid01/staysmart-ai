@@ -1,4 +1,3 @@
-import pytest
 from starlette.testclient import TestClient
 
 from staysmart.agent.errors import LLMUnavailableError
@@ -12,7 +11,13 @@ def test_chat_returns_structured_response(client, agent_llm):
         [
             LLMCompletion(
                 content=None,
-                tool_calls=[LLMToolCall(id="call-1", name="search_hotels", arguments={"destination": "Kyoto", "check_in": "2026-12-04", "check_out": "2026-12-07"})],
+                tool_calls=[
+                    LLMToolCall(
+                        id="call-1",
+                        name="search_hotels",
+                        arguments={"destination": "Kyoto", "check_in": "2026-12-04", "check_out": "2026-12-07"},
+                    )
+                ],
             ),
             LLMCompletion(content="Gion Machiya Stay is the pick.", tool_calls=[]),
         ]

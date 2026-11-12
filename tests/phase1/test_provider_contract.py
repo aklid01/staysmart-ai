@@ -160,9 +160,7 @@ async def test_get_hotel_details_rejects_unknown_hotel(provider):
 
 
 async def test_check_availability_reports_fully_sold_out_stay(provider):
-    result = await provider.check_availability(
-        "hotel-van-03", "room-van-03-std", CHECK_IN, CHECK_OUT, rooms=1
-    )
+    result = await provider.check_availability("hotel-van-03", "room-van-03-std", CHECK_IN, CHECK_OUT, rooms=1)
 
     assert result.nights_requested == 3
     assert result.nights_available == 0
@@ -186,9 +184,7 @@ async def test_check_availability_respects_destination_blackout(provider):
 
 
 async def test_check_availability_respects_capacity_below_rooms(provider):
-    result = await provider.check_availability(
-        "hotel-lis-04", "room-lis-04-std", CHECK_IN, CHECK_OUT, rooms=99
-    )
+    result = await provider.check_availability("hotel-lis-04", "room-lis-04-std", CHECK_IN, CHECK_OUT, rooms=99)
     assert result.available is False
     assert result.nights_available == 0
 
@@ -202,16 +198,12 @@ async def test_check_availability_rejects_unknown_ids(provider):
 
 async def test_check_availability_rejects_out_of_window_dates(provider):
     with pytest.raises(InvalidDateError):
-        await provider.check_availability(
-            "hotel-kyo-01", "room-kyo-01-std", date(2026, 10, 31), date(2026, 11, 2)
-        )
+        await provider.check_availability("hotel-kyo-01", "room-kyo-01-std", date(2026, 10, 31), date(2026, 11, 2))
 
 
 async def test_search_rejects_out_of_window_dates(provider):
     with pytest.raises(InvalidDateError):
-        await provider.search(
-            make_query(check_in=date(2028, 1, 1), check_out=date(2028, 1, 4))
-        )
+        await provider.search(make_query(check_in=date(2028, 1, 1), check_out=date(2028, 1, 4)))
 
 
 async def test_search_rejects_currency_mismatch(provider):
@@ -294,9 +286,7 @@ def test_configure_logging_is_idempotent():
 async def test_mock_markers_are_present_on_every_returned_object(provider):
     search = await provider.search(make_query(destination="Lisbon"))
     details = await provider.get_hotel_details("hotel-lis-01")
-    availability = await provider.check_availability(
-        "hotel-lis-01", "room-lis-01-std", CHECK_IN, CHECK_OUT
-    )
+    availability = await provider.check_availability("hotel-lis-01", "room-lis-01-std", CHECK_IN, CHECK_OUT)
 
     objects = [
         search,

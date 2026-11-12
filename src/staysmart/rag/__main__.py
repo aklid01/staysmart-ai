@@ -25,9 +25,7 @@ def main(argv: list[str] | None = None) -> int:
         embedder,
         destination_by_hotel=destination_by_hotel,
     )
-    logger.info(
-        "indexed %d chunks (dim %d) into %s", index.chunk_count, index.dim, settings.rag_index_path
-    )
+    logger.info("indexed %d chunks (dim %d) into %s", index.chunk_count, index.dim, settings.rag_index_path)
     print(f"ingested {index.chunk_count} chunks (dim {index.dim}) into {settings.rag_index_path}")
     return 0
 

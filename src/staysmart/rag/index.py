@@ -11,9 +11,7 @@ class VectorIndex:
     def __init__(self, vectors: np.ndarray, chunks: list[KnowledgeChunk]) -> None:
         matrix = np.asarray(vectors, dtype=np.float32)
         if matrix.ndim != 2 or matrix.shape[0] != len(chunks):
-            raise RagError(
-                f"vector/chunk count mismatch: {matrix.shape[0]} vectors for {len(chunks)} chunks"
-            )
+            raise RagError(f"vector/chunk count mismatch: {matrix.shape[0]} vectors for {len(chunks)} chunks")
         norms = np.linalg.norm(matrix, axis=1, keepdims=True)
         norms[norms == 0.0] = 1.0
         self.vectors = matrix / norms
@@ -59,9 +57,7 @@ class VectorIndex:
     def save(self, index_path: Path) -> None:
         index_path.mkdir(parents=True, exist_ok=True)
         np.save(index_path / "vectors.npy", self.vectors)
-        payload = json.dumps(
-            [chunk.model_dump() for chunk in self.chunks], indent=2, ensure_ascii=False
-        )
+        payload = json.dumps([chunk.model_dump() for chunk in self.chunks], indent=2, ensure_ascii=False)
         (index_path / "chunks.json").write_text(payload + "\n", encoding="utf-8", newline="\n")
 
     @classmethod
@@ -69,9 +65,7 @@ class VectorIndex:
         vectors_file = index_path / "vectors.npy"
         chunks_file = index_path / "chunks.json"
         if not vectors_file.is_file() or not chunks_file.is_file():
-            raise RagError(
-                f"vector index not found at {index_path}; run 'python -m staysmart.rag ingest' first"
-            )
+            raise RagError(f"vector index not found at {index_path}; run 'python -m staysmart.rag ingest' first")
         vectors = np.load(vectors_file)
         records = json.loads(chunks_file.read_text(encoding="utf-8"))
         chunks = [KnowledgeChunk.model_validate(record) for record in records]
