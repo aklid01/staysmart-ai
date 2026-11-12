@@ -1,0 +1,457 @@
+{
+  "artifact_version": 1,
+  "chunk_count": 167,
+  "doc_count": 53,
+  "embedding_dim": 384,
+  "model": "BAAI/bge-small-en-v1.5",
+  "queries": {
+    "cancellation_lisbon": {
+      "filters": {
+        "hotel_id": "hotel-lis-01"
+      },
+      "query": "What happens if I cancel my booking at the boutique hotel in Alfama?",
+      "results": [
+        {
+          "category": "cancellation",
+          "chunk_id": "hotel-lis-01-cancellation:3",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-01-cancellation",
+          "heading": "No-show policy",
+          "hotel_id": "hotel-lis-01",
+          "score": 0.8273,
+          "source_path": "hotels/hotel-lis-01/cancellation.md",
+          "text": "Guests who do not arrive and do not cancel are treated as a late cancellation and charged for the first night.",
+          "title": "Alfama Riverside Boutique cancellation and refund policy"
+        },
+        {
+          "category": "cancellation",
+          "chunk_id": "hotel-lis-01-cancellation:0",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-01-cancellation",
+          "heading": "Cancellation terms",
+          "hotel_id": "hotel-lis-01",
+          "score": 0.8234,
+          "source_path": "hotels/hotel-lis-01/cancellation.md",
+          "text": "Free cancellation applies until 2 days before check-in. Cancel at any point before that deadline and nothing is charged; cancellations after the deadline are charged for the first night of the stay.",
+          "title": "Alfama Riverside Boutique cancellation and refund policy"
+        },
+        {
+          "category": "cancellation",
+          "chunk_id": "hotel-lis-01-cancellation:1",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-01-cancellation",
+          "heading": "How to cancel",
+          "hotel_id": "hotel-lis-01",
+          "score": 0.784,
+          "source_path": "hotels/hotel-lis-01/cancellation.md",
+          "text": "Cancel through the same channel used to book, or contact reception directly. A written confirmation with a cancellation reference is sent for every cancellation.",
+          "title": "Alfama Riverside Boutique cancellation and refund policy"
+        },
+        {
+          "category": "cancellation",
+          "chunk_id": "hotel-lis-01-cancellation:2",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-01-cancellation",
+          "heading": "Refund process",
+          "hotel_id": "hotel-lis-01",
+          "score": 0.7369,
+          "source_path": "hotels/hotel-lis-01/cancellation.md",
+          "text": "When a charged stay is released and resold, the corresponding amount is refunded to the original payment method. Refunds usually appear within a few business days, depending on the card issuer.",
+          "title": "Alfama Riverside Boutique cancellation and refund policy"
+        }
+      ],
+      "sources": [
+        {
+          "category": "cancellation",
+          "chunk_count": 4,
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-01-cancellation",
+          "hotel_id": "hotel-lis-01",
+          "title": "Alfama Riverside Boutique cancellation and refund policy"
+        }
+      ]
+    },
+    "check_in_kyoto": {
+      "filters": {},
+      "query": "What time can we check in and drop our bags in Kyoto?",
+      "results": [
+        {
+          "category": "check_in_check_out",
+          "chunk_id": "kyoto-jp-check-in-check-out:1",
+          "destination_id": "kyoto-jp",
+          "doc_id": "kyoto-jp-check-in-check-out",
+          "heading": "Check-out",
+          "hotel_id": null,
+          "score": 0.8368,
+          "source_path": "destinations/kyoto-jp/check-in-check-out.md",
+          "text": "Check-out is by 10:00 on the departure day, the standard rhythm for Japanese properties. Late check-out can be requested the evening before and is granted subject to availability. Luggage forwarding services at the station ship bags between cities if the departure flight leaves late.",
+          "title": "Kyoto check-in and check-out guide"
+        },
+        {
+          "category": "check_in_check_out",
+          "chunk_id": "kyoto-jp-check-in-check-out:0",
+          "destination_id": "kyoto-jp",
+          "doc_id": "kyoto-jp-check-in-check-out",
+          "heading": "Check-in",
+          "hotel_id": null,
+          "score": 0.8272,
+          "source_path": "destinations/kyoto-jp/check-in-check-out.md",
+          "text": "Check-in starts at 15:00 for the Kyoto hotels in this collection. Guests present passports at the front desk, as Japanese lodging law requires identification from every adult staying overnight. Luggage can be stored at reception until the room is ready.",
+          "title": "Kyoto check-in and check-out guide"
+        },
+        {
+          "category": "check_in_check_out",
+          "chunk_id": "kyoto-jp-check-in-check-out:2",
+          "destination_id": "kyoto-jp",
+          "doc_id": "kyoto-jp-check-in-check-out",
+          "heading": "Local notes",
+          "hotel_id": null,
+          "score": 0.7703,
+          "source_path": "destinations/kyoto-jp/check-in-check-out.md",
+          "text": "Kyoto runs on Japan Standard Time. Slippers replace shoes indoors in machiya and ryokan stays, and cash remains useful for small shops although cards are widely taken. Trash separation follows the neighbourhood rules posted in each room.",
+          "title": "Kyoto check-in and check-out guide"
+        },
+        {
+          "category": "cancellation",
+          "chunk_id": "hotel-kyo-02-cancellation:0",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-02-cancellation",
+          "heading": "Cancellation terms",
+          "hotel_id": "hotel-kyo-02",
+          "score": 0.7532,
+          "source_path": "hotels/hotel-kyo-02/cancellation.md",
+          "text": "Free cancellation applies until 3 days before check-in. Cancel before that point and nothing is charged; cancellations after the deadline are charged for the first night of the stay.",
+          "title": "Kyoto Station Tower cancellation and refund policy"
+        }
+      ],
+      "sources": [
+        {
+          "category": "check_in_check_out",
+          "chunk_count": 3,
+          "destination_id": "kyoto-jp",
+          "doc_id": "kyoto-jp-check-in-check-out",
+          "hotel_id": null,
+          "title": "Kyoto check-in and check-out guide"
+        },
+        {
+          "category": "cancellation",
+          "chunk_count": 1,
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-02-cancellation",
+          "hotel_id": "hotel-kyo-02",
+          "title": "Kyoto Station Tower cancellation and refund policy"
+        }
+      ]
+    },
+    "parking_lisbon": {
+      "filters": {},
+      "query": "Is there parking for guests arriving by car in Baixa?",
+      "results": [
+        {
+          "category": "amenities",
+          "chunk_id": "hotel-lis-02-amenities:2",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-amenities",
+          "heading": "Getting around",
+          "hotel_id": "hotel-lis-02",
+          "score": 0.7607,
+          "source_path": "hotels/hotel-lis-02/amenities.md",
+          "text": "The metro and bus stops are a short walk from the door, taxis rank around the corner, and the airport transfer by taxi takes roughly twenty minutes.",
+          "title": "Baixa Central Hotel amenities"
+        },
+        {
+          "category": "amenities",
+          "chunk_id": "hotel-lis-02-amenities:0",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-amenities",
+          "heading": "Hotel facilities",
+          "hotel_id": "hotel-lis-02",
+          "score": 0.7337,
+          "source_path": "hotels/hotel-lis-02/amenities.md",
+          "text": "Wi-fi is free across the building. A small gym with cardio machines and free weights is open from early morning to late evening, and covered on-site parking is offered to guests arriving by car. All rooms have air conditioning.",
+          "title": "Baixa Central Hotel amenities"
+        },
+        {
+          "category": "pet_policy",
+          "chunk_id": "hotel-lis-02-pet-policy:2",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-pet-policy",
+          "heading": "Nearby options",
+          "hotel_id": "hotel-lis-02",
+          "score": 0.7236,
+          "source_path": "hotels/hotel-lis-02/pet-policy.md",
+          "text": "Reception keeps a list of licensed boarding and day-care providers in Lisbon for guests travelling with animals.",
+          "title": "Baixa Central Hotel pet policy"
+        },
+        {
+          "category": "general",
+          "chunk_id": "hotel-lis-02-general:1",
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-general",
+          "heading": "Location and neighbourhood",
+          "hotel_id": "hotel-lis-02",
+          "score": 0.7103,
+          "source_path": "hotels/hotel-lis-02/general.md",
+          "text": "Baixa is the flat, grid-planned heart of Lisbon. Transit links, shops and cafes are on the doorstep, and the riverfront is a short walk downhill.",
+          "title": "Baixa Central Hotel overview"
+        }
+      ],
+      "sources": [
+        {
+          "category": "amenities",
+          "chunk_count": 2,
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-amenities",
+          "hotel_id": "hotel-lis-02",
+          "title": "Baixa Central Hotel amenities"
+        },
+        {
+          "category": "pet_policy",
+          "chunk_count": 1,
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-pet-policy",
+          "hotel_id": "hotel-lis-02",
+          "title": "Baixa Central Hotel pet policy"
+        },
+        {
+          "category": "general",
+          "chunk_count": 1,
+          "destination_id": "lisbon-pt",
+          "doc_id": "hotel-lis-02-general",
+          "hotel_id": "hotel-lis-02",
+          "title": "Baixa Central Hotel overview"
+        }
+      ]
+    },
+    "pet_policy_kyoto": {
+      "filters": {
+        "hotel_id": "hotel-kyo-01"
+      },
+      "query": "Are dogs and cats allowed to stay at the townhouse?",
+      "results": [
+        {
+          "category": "pet_policy",
+          "chunk_id": "hotel-kyo-01-pet-policy:0",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-pet-policy",
+          "heading": "Pets at Gion Machiya Stay",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.7706,
+          "source_path": "hotels/hotel-kyo-01/pet-policy.md",
+          "text": "Pets are allowed at this property. The townhouse layout, with its own entrance and a contained courtyard, makes it an easy stay for a well-behaved small dog or cat.",
+          "title": "Gion Machiya Stay pet policy"
+        },
+        {
+          "category": "pet_policy",
+          "chunk_id": "hotel-kyo-01-pet-policy:2",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-pet-policy",
+          "heading": "Practical notes",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.6047,
+          "source_path": "hotels/hotel-kyo-01/pet-policy.md",
+          "text": "Tell the house about the animal when booking so the ground-floor room can be assigned. A small cleaning surcharge may apply and is confirmed before arrival.",
+          "title": "Gion Machiya Stay pet policy"
+        },
+        {
+          "category": "amenities",
+          "chunk_id": "hotel-kyo-01-amenities:1",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-amenities",
+          "heading": "Comfort details",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.598,
+          "source_path": "hotels/hotel-kyo-01/amenities.md",
+          "text": "Yukata robes, tea sets and a shared tea corner are part of the stay. The house is pet-friendly, so a well-behaved animal can stay in the ground-floor room with its own bedding. The staff can arrange bicycle hire, and umbrellas stand by the entrance for rainy days.",
+          "title": "Gion Machiya Stay amenities"
+        },
+        {
+          "category": "pet_policy",
+          "chunk_id": "hotel-kyo-01-pet-policy:1",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-pet-policy",
+          "heading": "Rules and comfort",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.5947,
+          "source_path": "hotels/hotel-kyo-01/pet-policy.md",
+          "text": "Animals stay off the tatami in wet weather, sleep on their own bedding brought from home, and stay supervised in the courtyard. Food and water bowls are available from the house.",
+          "title": "Gion Machiya Stay pet policy"
+        }
+      ],
+      "sources": [
+        {
+          "category": "pet_policy",
+          "chunk_count": 3,
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-pet-policy",
+          "hotel_id": "hotel-kyo-01",
+          "title": "Gion Machiya Stay pet policy"
+        },
+        {
+          "category": "amenities",
+          "chunk_count": 1,
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-amenities",
+          "hotel_id": "hotel-kyo-01",
+          "title": "Gion Machiya Stay amenities"
+        }
+      ]
+    },
+    "quiet_breakfast_room": {
+      "filters": {
+        "hotel_id": "hotel-kyo-01"
+      },
+      "query": "a quiet tatami room with futon bedding and breakfast included",
+      "results": [
+        {
+          "category": "rooms",
+          "chunk_id": "hotel-kyo-01-rooms:0",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-rooms",
+          "heading": "Tatami Double",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.7604,
+          "source_path": "hotels/hotel-kyo-01/rooms.md",
+          "text": "The Tatami Double sleeps up to 2 guests on futon bedding laid out over tatami mats in the evening. The room keeps a low wooden table, floor cushions, wi-fi, air conditioning, and a breakfast tray service each morning.",
+          "title": "Gion Machiya Stay rooms"
+        },
+        {
+          "category": "amenities",
+          "chunk_id": "hotel-kyo-01-amenities:0",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-amenities",
+          "heading": "Hotel facilities",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.7029,
+          "source_path": "hotels/hotel-kyo-01/amenities.md",
+          "text": "Wi-fi reaches every room and the courtyard. A Japanese-style breakfast is served each morning, either in the small dining room or as a tray in the room, and air conditioning keeps the wooden townhouse comfortable through Kyoto's humid summer.",
+          "title": "Gion Machiya Stay amenities"
+        },
+        {
+          "category": "amenities",
+          "chunk_id": "hotel-kyo-01-amenities:1",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-amenities",
+          "heading": "Comfort details",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.6961,
+          "source_path": "hotels/hotel-kyo-01/amenities.md",
+          "text": "Yukata robes, tea sets and a shared tea corner are part of the stay. The house is pet-friendly, so a well-behaved animal can stay in the ground-floor room with its own bedding. The staff can arrange bicycle hire, and umbrellas stand by the entrance for rainy days.",
+          "title": "Gion Machiya Stay amenities"
+        },
+        {
+          "category": "rooms",
+          "chunk_id": "hotel-kyo-01-rooms:1",
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-rooms",
+          "heading": "Sleeping on futons",
+          "hotel_id": "hotel-kyo-01",
+          "score": 0.6775,
+          "source_path": "hotels/hotel-kyo-01/rooms.md",
+          "text": "Futons are aired daily and laid out while guests are at dinner. Guests who have never slept on one should expect a firm, floor-level bed that many find excellent for backs.",
+          "title": "Gion Machiya Stay rooms"
+        }
+      ],
+      "sources": [
+        {
+          "category": "rooms",
+          "chunk_count": 2,
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-rooms",
+          "hotel_id": "hotel-kyo-01",
+          "title": "Gion Machiya Stay rooms"
+        },
+        {
+          "category": "amenities",
+          "chunk_count": 2,
+          "destination_id": "kyoto-jp",
+          "doc_id": "hotel-kyo-01-amenities",
+          "hotel_id": "hotel-kyo-01",
+          "title": "Gion Machiya Stay amenities"
+        }
+      ]
+    },
+    "spa_vancouver": {
+      "filters": {
+        "destination_id": "vancouver-ca"
+      },
+      "query": "a waterfront hotel with a spa and an indoor pool",
+      "results": [
+        {
+          "category": "amenities",
+          "chunk_id": "hotel-van-01-amenities:0",
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-amenities",
+          "heading": "Wellness",
+          "hotel_id": "hotel-van-01",
+          "score": 0.7326,
+          "source_path": "hotels/hotel-van-01/amenities.md",
+          "text": "The indoor pool runs lanes through the morning and open swim later in the day. The spa offers massages, facials and a hot-and-cold circuit, booked at the spa desk. The gym shares the pool level and opens early.",
+          "title": "Coal Harbour Grand amenities"
+        },
+        {
+          "category": "general",
+          "chunk_id": "hotel-van-01-general:0",
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-general",
+          "heading": "About the hotel",
+          "hotel_id": "hotel-van-01",
+          "score": 0.6591,
+          "source_path": "hotels/hotel-van-01/general.md",
+          "text": "Coal Harbour Grand is a 5-star waterfront business hotel in Vancouver. It combines a full-service spa, an indoor pool, a fitness centre and covered parking under one roof, with the waterfront seawall at the doorstep.",
+          "title": "Coal Harbour Grand overview"
+        },
+        {
+          "category": "rooms",
+          "chunk_id": "hotel-van-01-rooms:0",
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-rooms",
+          "heading": "Harbour King",
+          "hotel_id": "hotel-van-01",
+          "score": 0.6237,
+          "source_path": "hotels/hotel-van-01/rooms.md",
+          "text": "The Harbour King sleeps up to 2 guests in a king bed. It is a full-width room with a harbour-view window, wi-fi, air conditioning, a marble bathroom and a compact work desk with a harbour-facing chair.",
+          "title": "Coal Harbour Grand rooms"
+        },
+        {
+          "category": "rooms",
+          "chunk_id": "hotel-van-01-rooms:1",
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-rooms",
+          "heading": "View notes",
+          "hotel_id": "hotel-van-01",
+          "score": 0.6217,
+          "source_path": "hotels/hotel-van-01/rooms.md",
+          "text": "Harbour-facing rooms watch the marina and float planes; city-facing rooms on the opposite side trade the view for a slightly lower position in the house. Both keep the same fittings.",
+          "title": "Coal Harbour Grand rooms"
+        }
+      ],
+      "sources": [
+        {
+          "category": "amenities",
+          "chunk_count": 1,
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-amenities",
+          "hotel_id": "hotel-van-01",
+          "title": "Coal Harbour Grand amenities"
+        },
+        {
+          "category": "general",
+          "chunk_count": 1,
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-general",
+          "hotel_id": "hotel-van-01",
+          "title": "Coal Harbour Grand overview"
+        },
+        {
+          "category": "rooms",
+          "chunk_count": 2,
+          "destination_id": "vancouver-ca",
+          "doc_id": "hotel-van-01-rooms",
+          "hotel_id": "hotel-van-01",
+          "title": "Coal Harbour Grand rooms"
+        }
+      ]
+    }
+  }
+}
