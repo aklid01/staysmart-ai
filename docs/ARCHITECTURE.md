@@ -2,7 +2,7 @@
 
 ## Implementation status
 
-Read this first. Phases 0 through 5 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
+Read this first. Phases 0 through 6 are implemented. Everything marked "not yet implemented" below is a design note, not an available feature.
 
 | Component | Phase | Status |
 | --- | --- | --- |
@@ -12,15 +12,15 @@ Read this first. Phases 0 through 5 are implemented. Everything marked "not yet 
 | Starlette app and MCP client | 3 | Implemented |
 | RAG ingestion, indexing and retrieval | 4 | Implemented |
 | LLM agent orchestration | 5 | Implemented |
-| TypeScript frontend | 6 | Not yet implemented |
+| TypeScript frontend | 6 | Implemented |
 
 ## Layering
 
-Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG (`src/staysmart/rag/`) is a separate retrieval channel for descriptive context: it depends on domain models only, is never wired through the MCP tools, and never supplies prices or availability. The LLM agent (`src/staysmart/agent/`) sits above both channels through a configurable OpenAI-compatible endpoint, calling MCP tools for facts and RAG for context, with bounded turns, duplicate rejection and tool-payload-only hotel cards. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
+Dependencies point inward. Domain models depend on nothing. The provider Protocol depends only on domain models. `MockHotelProvider` is the only component that knows the data is mock. The service layer (`compare_hotels`, `get_hotel_policies`) composes provider operations through the Protocol. MCP tools own their input schemas via type hints and depend on the Protocol plus the service, never on the concrete provider. The Starlette app hosts an MCP client that speaks stdio to the server subprocess and serves the frontend over HTTP; its request models mirror the tool inputs and its error handlers classify tool failures. RAG (`src/staysmart/rag/`) is a separate retrieval channel for descriptive context: it depends on domain models only, is never wired through the MCP tools, and never supplies prices or availability. The LLM agent (`src/staysmart/agent/`) sits above both channels through a configurable OpenAI-compatible endpoint, calling MCP tools for facts and RAG for context, with bounded turns, duplicate rejection and tool-payload-only hotel cards. The frontend (`frontend/`) is presentation only: it renders chat responses, calls the structured endpoints for dialogs, and holds no agent, retrieval or provider logic. Configuration is the composition root, and `HOTEL_PROVIDER` selects the implementation.
 
 ```mermaid
 flowchart TD
-  FE["Frontend TS - Phase 6, planned"] -->|HTTP| APP["Starlette app + MCP client - implemented"]
+  FE["Frontend TS - implemented"] -->|"HTTP /api"| APP["Starlette app + MCP client - implemented"]
   APP -->|"stdio tool calls"| TOOLS["MCP tools - implemented"]
   APP -->|"chat"| AGENT["LLM agent - implemented"]
   AGENT --> TOOLS
@@ -79,6 +79,8 @@ flowchart TD
 | `src/staysmart/agent/agent.py` | `HotelAgent` loop with 6-turn and 12-tool-call budgets, duplicate-call rejection, forced summaries, tool-payload-only hotel cards, and `AgentTurnResult`. |
 | `scripts/demo_agent.py` | Runs three real-model scenarios end to end and writes `artifacts/agent_demo.json` (verified semantically, not byte-compared). |
 | `tests/phase5/` | Behavioral contract, 18 pytest tests (loop safeguards, endpoint contract, real-model E2E with reachability skip). |
+| `frontend/` | Vite + React + TypeScript single-view chat app: chat thread with markdown-lite rendering, hotel cards from `hotels[]` with destination gradient placeholders, comparison tables, details and policy dialogs over the structured endpoints, source and tool-trace chips, typing/error states, mock-data badge and health dot. Dev server proxies `/api` to port 8000. |
+| `tests/phase6/` | Frontend contract plus the browser E2E interaction log (screenshots under `artifacts/ui_demo/`). |
 
 ### Search flow as implemented
 
@@ -99,9 +101,7 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 
 ## Component responsibilities (planned)
 
-| Component | Responsibility |
-| --- | --- |
-| `frontend/` | Presentation and user interaction only. |
+No remaining planned components; Phase 7 covers integration hardening and documentation completion rather than new modules.
 
 ## Invariants
 
@@ -115,6 +115,6 @@ sold_out = capacity < rooms OR iso_date in sold_out_overrides OR iso_date in bla
 - The provider interface is replaceable. A real connectivity provider can implement the same Protocol later.
 - No reservations, payments or booking transactions.
 
-## Data flow (as of Phase 5)
+## Data flow (as of Phase 6)
 
-Structured requests hit the Starlette endpoints and map to one MCP tool call each, returning the tool payload verbatim. Chat requests flow through `HotelAgent`: the model plans tool calls, the agent executes them over the MCP session and the knowledge retriever, and the response combines grounded text with tool-derived hotel payloads, RAG sources and a tool trace. Tool failures are classified for HTTP semantics; agent budgets force honest summaries instead of unbounded loops. The frontend (Phase 6) will render chat answers, result cards from the `hotels` array, comparison views, policy sources and loading or error states.
+The browser app calls `POST /api/chat` with the message, a session-generated conversation id and recent history; the agent plans tool calls, executes them over MCP and RAG, and returns grounded text with tool-derived hotel payloads, comparison data, knowledge sources and a tool trace. The frontend renders cards, tables and citations from those structured payloads and fetches details or policies from the structured endpoints when the user opens a dialog. Structured requests (`/api/search`, `/api/hotels/{id}`, `/api/hotels/{id}/policies`, `/api/hotels/{id}/availability`, `/api/compare`) map to one MCP tool call each and return the payload verbatim. The browser never talks to the MCP server or the model directly.

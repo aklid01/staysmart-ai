@@ -14,7 +14,7 @@ An educational MVP demonstrating MCP integration, LLM tool calling, RAG and API 
 | 3 - Starlette application service and MCP client integration | Implemented |
 | 4 - RAG ingestion and retrieval | Implemented |
 | 5 - LLM agent orchestration | Implemented |
-| 6 - TypeScript frontend | Not yet implemented |
+| 6 - TypeScript frontend | Implemented |
 | 7 - Integration testing and final documentation | Not yet implemented |
 
 Documentation describes implemented behavior only. Sections describing future phases are design notes, not available features.
@@ -57,6 +57,14 @@ Phase 5 adds:
 - Model configuration through `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL` (OpenAI-compatible endpoints; the default targets the local endpoint and needs no key). Agent logic tests run offline against a scripted model; the real-model E2E skips when the endpoint is unreachable.
 - 181 tests total across phases 1-5, including endpoint contract tests for the new chat behavior (200 structured response, 503 `llm_unavailable`, 503 `rag_unavailable`).
 
+Phase 6 adds:
+
+- A chat-first hotel discovery UI in `frontend/` (Vite + React + TypeScript, no router, no state library, plain CSS): chat thread with markdown-lite rendering, hotel cards built from the agent's tool payloads, comparison tables, source and tool-trace chips, and typing/error states.
+- Hotel cards show destination gradient placeholders (no binary images), star and guest ratings, nightly and total prices, amenity chips, cancellation badges, availability with sold-out dates, and a persistent `mock data` badge.
+- Details and policies dialogs call the structured endpoints (`/api/hotels/{id}` with the stay dates, `/api/hotels/{id}/policies`), rendering room quotes, cancellation terms, pet policy with its source marker and explicit information-gap chips.
+- The header shows a live `/api/health` status dot. Errors render from the API error envelope; a stopped backend shows a readable banner while the thread keeps the user's message for retry.
+- Browser E2E verified black-box with screenshots and an interaction log (`tests/phase6/interaction_log.json`, screenshots under `artifacts/ui_demo/`).
+
 ## Stack
 
 - Python 3.13, uv, pydantic v2
@@ -88,6 +96,16 @@ Run the HTTP application service (starts uvicorn on `127.0.0.1:8000`, launches t
 ```bash
 uv run python -m staysmart.app
 ```
+
+Run the chat frontend in a second terminal (Vite dev server on `http://localhost:5173`, proxying `/api` to the backend):
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then open `http://localhost:5173` and ask in plain language. `npm run build` produces the production bundle in `frontend/dist`.
 
 Try it while the service runs:
 
@@ -184,6 +202,7 @@ src/staysmart/agent/llm.py                  OpenAI-compatible client and scripte
 src/staysmart/agent/tools.py                agent tool specs and dispatcher
 src/staysmart/agent/prompts.py              grounded system prompt
 src/staysmart/agent/agent.py                HotelAgent loop, budgets and safeguards
+frontend/                                   Vite + React + TS chat UI (cards, dialogs, comparison)
 data/hotels/v1/hotels.json                  versioned mock dataset
 data/knowledge/v1/                          authored markdown knowledge corpus
 scripts/demo_provider.py                    provider E2E artifact generator
@@ -196,6 +215,7 @@ tests/phase2/                               service and MCP contract, tests, gol
 tests/phase3/                               HTTP API contract, tests, golden artifact
 tests/phase4/                               RAG contract, tests, golden artifact
 tests/phase5/                               agent contract, tests, semantic E2E
+tests/phase6/                               frontend contract and browser E2E interaction log
 docs/                                       architecture and decision records
 ```
 
