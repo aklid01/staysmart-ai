@@ -2,7 +2,6 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from mcp import Client
 
 from staysmart.config import Settings
 from staysmart.mcp_server.server import build_mcp_server
@@ -32,10 +31,8 @@ def provider(settings):
 
 
 @pytest.fixture
-async def mcp_client(provider, settings):
-    server = build_mcp_server(settings, provider)
-    async with Client(server=server) as client:
-        yield client
+def mcp_server(provider, settings):
+    return build_mcp_server(settings, provider)
 
 
 @pytest.fixture

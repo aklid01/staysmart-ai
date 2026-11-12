@@ -11,7 +11,7 @@ Phase 1 provider behavior is unchanged. Every result object still carries `data_
 ## Invariants
 
 - The five tool names are fixed. `list_tools` returns exactly that set.
-- Tools accept arguments validated by the SDK from type hints. Anticipated domain failures raise `ToolError` and surface to clients as `CallToolResult` with `is_error=True` and the message in `content`. Unexpected crashes surface as `is_error=True` with the generic message `Error executing tool <name>`, never with internal details.
+- Tools accept arguments validated by the SDK from type hints. Anticipated domain failures raise `ToolError` and surface to clients as `CallToolResult` with `is_error=True` whose text is `Error executing tool <tool name>: <StaySmartError message>` (the prefix is added by the SDK's tool runner). Unexpected crashes surface as `is_error=True` with the generic message `Error executing tool <name>`, never with internal details.
 - Sold-out and partially available stays are success results, never errors.
 - Tools never accept a currency argument. The server pins currency from `Settings`, and a mismatch between settings and dataset fails at provider construction.
 - The `staysmart` logger writes to stderr only. The stdio protocol channel on stdout must stay clean; the stdio E2E test passing is the proof.
@@ -99,16 +99,17 @@ Dates are ISO strings on the wire and coerce to `date`. Amenity values must be e
 | --- | --- |
 | Unknown tool name | `is_error=True`, SDK-generated message |
 | Schema-invalid arguments (wrong type, unknown amenity, missing required, non-ISO date) | `is_error=True`, SDK validation message |
-| Unknown destination, unknown hotel, unknown room type, invalid date order, stay beyond 30 nights, dates outside the booking window, provider data failures | `is_error=True` carrying the `StaySmartError` message verbatim |
+| Unknown destination, unknown hotel, unknown room type, invalid date order, stay beyond 30 nights, dates outside the booking window, provider data failures | `is_error=True` whose text is `Error executing tool <tool name>: <StaySmartError message>` |
 | Sold-out or partial stay | success result with `available=False`, sold-out dates, and no invented total |
 | Empty comparison result set | success with `rows=[]` and `unresolved_hotel_ids` |
 | Provider crash (`RuntimeError` and friends) | `is_error=True` with generic `Error executing tool <name>` |
 
-Expected provider messages, pinned for tests and the artifact:
+Expected provider messages, pinned for tests and the artifact. They arrive after the `Error executing tool <tool name>: ` prefix:
 
 - `No destination matches 'Atlantis' in the mock dataset`
 - `Unknown hotel_id 'hotel-xxx-99' in the mock dataset`
-- `Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04`
+- `Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04` (`check_availability`; the provider window check runs first there)
+- `check_out must be after check_in` (`search_hotels` and `compare_hotels`, whose stay-length validation runs before the provider window check)
 - `Unknown room_type_id 'room-lis-02-suite' for hotel 'hotel-lis-02'`
 
 ## Failure modes to test

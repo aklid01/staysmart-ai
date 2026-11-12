@@ -44,6 +44,7 @@ async def test_stdio_subprocess_returns_mock_marked_search_results():
                 "check_out": "2026-12-07",
                 "max_nightly_budget": 250.0,
                 "min_rating": 8.0,
+                "amenities": ["WIFI", "BREAKFAST"],
             },
         )
 
@@ -63,4 +64,6 @@ async def test_stdio_subprocess_carries_error_results_without_failing():
         )
 
         assert result.is_error is True
-        assert result.content[0].text == "Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+        assert result.content[0].text == (
+            "Error executing tool get_hotel_details: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+        )

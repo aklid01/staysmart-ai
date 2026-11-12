@@ -6,15 +6,15 @@
   "errors": {
     "invalid_dates_availability": {
       "is_error": true,
-      "message": "Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04"
+      "message": "Error executing tool check_availability: Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04"
     },
     "unknown_destination_search": {
       "is_error": true,
-      "message": "No destination matches 'Atlantis' in the mock dataset"
+      "message": "Error executing tool search_hotels: No destination matches 'Atlantis' in the mock dataset"
     },
     "unknown_hotel_details": {
       "is_error": true,
-      "message": "Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+      "message": "Error executing tool get_hotel_details: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
     }
   },
   "is_live": false,
@@ -51,6 +51,7 @@
         "hotel-xxx-99"
       ],
       "is_live": false,
+      "rooms": 1,
       "rows": [
         {
           "amenities": [
