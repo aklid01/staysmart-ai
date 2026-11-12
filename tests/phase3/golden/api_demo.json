@@ -1,0 +1,493 @@
+{
+  "artifact_version": 1,
+  "base_url": "http://127.0.0.1",
+  "currency": "USD",
+  "data_source": "mock",
+  "errors": {
+    "chat_empty_message": {
+      "body": {
+        "error": {
+          "code": "validation_error",
+          "details": [
+            {
+              "loc": [
+                "message"
+              ],
+              "msg": "String should have at least 1 character",
+              "type": "string_too_short"
+            }
+          ],
+          "error_type": "ValidationError",
+          "message": "Request validation failed"
+        }
+      },
+      "method": "POST",
+      "path": "/api/chat",
+      "status": 422
+    },
+    "empty_compare_hotel_ids": {
+      "body": {
+        "error": {
+          "code": "empty_hotel_ids",
+          "error_type": "ToolError",
+          "message": "hotel_ids must contain at least one hotel id"
+        }
+      },
+      "method": "POST",
+      "path": "/api/compare",
+      "status": 400
+    },
+    "invalid_dates_availability": {
+      "body": {
+        "error": {
+          "code": "invalid_date",
+          "error_type": "InvalidDateError",
+          "message": "Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04"
+        }
+      },
+      "method": "POST",
+      "path": "/api/hotels/hotel-lis-02/availability",
+      "status": 400
+    },
+    "unknown_destination_search": {
+      "body": {
+        "error": {
+          "code": "unknown_destination",
+          "error_type": "UnknownDestinationError",
+          "message": "No destination matches 'Atlantis' in the mock dataset"
+        }
+      },
+      "method": "POST",
+      "path": "/api/search",
+      "status": 404
+    },
+    "unknown_hotel_details": {
+      "body": {
+        "error": {
+          "code": "unknown_hotel",
+          "error_type": "UnknownHotelError",
+          "message": "Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+        }
+      },
+      "method": "GET",
+      "path": "/api/hotels/hotel-xxx-99",
+      "status": 404
+    },
+    "validation_missing_destination": {
+      "body": {
+        "error": {
+          "code": "validation_error",
+          "details": [
+            {
+              "loc": [
+                "destination"
+              ],
+              "msg": "Field required",
+              "type": "missing"
+            }
+          ],
+          "error_type": "ValidationError",
+          "message": "Request validation failed"
+        }
+      },
+      "method": "POST",
+      "path": "/api/search",
+      "status": 422
+    }
+  },
+  "is_live": false,
+  "requests": {
+    "availability_van_03": {
+      "body": {
+        "available": false,
+        "check_in": "2026-12-04",
+        "check_out": "2026-12-07",
+        "currency": "USD",
+        "data_source": "mock",
+        "hotel_id": "hotel-van-03",
+        "is_live": false,
+        "nightly_rates": [],
+        "nights_available": 0,
+        "nights_requested": 3,
+        "room_type_id": "room-van-03-std",
+        "rooms": 1,
+        "sold_out_dates": [
+          "2026-12-04",
+          "2026-12-05",
+          "2026-12-06"
+        ],
+        "total_price": null
+      },
+      "method": "POST",
+      "path": "/api/hotels/hotel-van-03/availability",
+      "status": 200
+    },
+    "chat_stub": {
+      "body": {
+        "error": {
+          "code": "agent_not_available",
+          "error_type": "AgentNotAvailableError",
+          "message": "The LLM agent is not implemented yet; chat arrives in Phase 5."
+        }
+      },
+      "method": "POST",
+      "path": "/api/chat",
+      "status": 501
+    },
+    "compare_lisbon": {
+      "body": {
+        "check_in": "2026-12-04",
+        "check_out": "2026-12-07",
+        "currency": "USD",
+        "data_source": "mock",
+        "guests": 2,
+        "hotel_ids_requested": [
+          "hotel-lis-01",
+          "hotel-lis-02",
+          "hotel-xxx-99"
+        ],
+        "is_live": false,
+        "rooms": 1,
+        "rows": [
+          {
+            "amenities": [
+              "WIFI",
+              "BREAKFAST",
+              "AIR_CONDITIONING",
+              "RESTAURANT"
+            ],
+            "availability": true,
+            "cancellation_policy": "free",
+            "guest_rating": 8.7,
+            "hotel_id": "hotel-lis-01",
+            "location": "Alfama, Lisbon",
+            "name": "Alfama Riverside Boutique",
+            "nightly_price": 152.44,
+            "refundable": true,
+            "total_stay_price": 457.32
+          },
+          {
+            "amenities": [
+              "WIFI",
+              "GYM",
+              "PARKING",
+              "AIR_CONDITIONING"
+            ],
+            "availability": false,
+            "cancellation_policy": "flexible",
+            "guest_rating": 7.9,
+            "hotel_id": "hotel-lis-02",
+            "location": "Baixa, Lisbon",
+            "name": "Baixa Central Hotel",
+            "nightly_price": 106.76,
+            "refundable": true,
+            "total_stay_price": null
+          }
+        ],
+        "unmet_preferences": [
+          "preference_not_verified:river view"
+        ],
+        "unresolved_hotel_ids": [
+          "hotel-xxx-99"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/compare",
+      "status": 200
+    },
+    "details_lis_01": {
+      "body": {
+        "cancellation_policy": "free",
+        "check_in": "2026-12-04",
+        "check_out": "2026-12-07",
+        "currency": "USD",
+        "data_source": "mock",
+        "free_cancellation_days": 2,
+        "guests": 2,
+        "hotel_id": "hotel-lis-01",
+        "hotel_name": "Alfama Riverside Boutique",
+        "is_live": false,
+        "penalty_nights": 0,
+        "refundable": true,
+        "room_quotes": [
+          {
+            "available": true,
+            "avg_nightly_rate": 152.44,
+            "nightly_rates": [
+              153.32,
+              154.84,
+              149.16
+            ],
+            "nights": 3,
+            "nights_available": 3,
+            "partially_available": false,
+            "room_type_id": "room-lis-01-std",
+            "sold_out_dates": [],
+            "total_price": 457.32
+          },
+          {
+            "available": false,
+            "avg_nightly_rate": 214.61,
+            "nightly_rates": [
+              214.61
+            ],
+            "nights": 3,
+            "nights_available": 1,
+            "partially_available": true,
+            "room_type_id": "room-lis-01-suite",
+            "sold_out_dates": [
+              "2026-12-05",
+              "2026-12-06"
+            ],
+            "total_price": null
+          }
+        ],
+        "rooms": 1
+      },
+      "method": "GET",
+      "path": "/api/hotels/hotel-lis-01",
+      "status": 200
+    },
+    "health": {
+      "body": {
+        "connected": true,
+        "currency": "USD",
+        "data_source": "mock",
+        "is_live": false,
+        "mcp_server": {
+          "connected": true,
+          "name": "staysmart-hotels",
+          "tools": [
+            "check_availability",
+            "compare_hotels",
+            "get_hotel_details",
+            "get_hotel_policies",
+            "search_hotels"
+          ]
+        },
+        "provider": "mock",
+        "service": "staysmart-api",
+        "status": "ok",
+        "version": "0.1.0"
+      },
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200
+    },
+    "policies_kyo_01": {
+      "body": {
+        "cancellation_policy": "partial",
+        "check_in_time": null,
+        "check_out_time": null,
+        "data_source": "mock",
+        "free_cancellation_days": 5,
+        "general_info": "Restored machiya townhouse with breakfast service near Gion.",
+        "hotel_id": "hotel-kyo-01",
+        "hotel_name": "Gion Machiya Stay",
+        "information_gaps": [
+          "check_in_time",
+          "check_out_time"
+        ],
+        "is_live": false,
+        "penalty_nights": 1,
+        "pet_policy": "allowed",
+        "pet_policy_source": "amenities",
+        "policy_description": "Refundable until 5 days before check-in, less a one-night penalty.",
+        "refundable": true
+      },
+      "method": "GET",
+      "path": "/api/hotels/hotel-kyo-01/policies",
+      "status": 200
+    },
+    "policies_lis_01": {
+      "body": {
+        "cancellation_policy": "free",
+        "check_in_time": null,
+        "check_out_time": null,
+        "data_source": "mock",
+        "free_cancellation_days": 2,
+        "general_info": "Small riverside boutique property within walking distance of Alfama viewpoints.",
+        "hotel_id": "hotel-lis-01",
+        "hotel_name": "Alfama Riverside Boutique",
+        "information_gaps": [
+          "check_in_time",
+          "check_out_time",
+          "pet_policy"
+        ],
+        "is_live": false,
+        "penalty_nights": 0,
+        "pet_policy": "unknown",
+        "pet_policy_source": "not_provided",
+        "policy_description": "Free cancellation until 2 days before check-in.",
+        "refundable": true
+      },
+      "method": "GET",
+      "path": "/api/hotels/hotel-lis-01/policies",
+      "status": 200
+    },
+    "search_kyoto_family": {
+      "body": {
+        "check_in": "2026-12-04",
+        "check_out": "2026-12-07",
+        "destination": "Kyoto",
+        "guests": 2,
+        "hits": [
+          {
+            "amenities": [
+              "WIFI",
+              "BREAKFAST",
+              "AIR_CONDITIONING",
+              "PET_FRIENDLY"
+            ],
+            "available": false,
+            "avg_nightly_rate": 234.28,
+            "cancellation_policy": "partial",
+            "currency": "USD",
+            "data_source": "mock",
+            "guest_rating": 9.0,
+            "hotel_id": "hotel-kyo-01",
+            "hotel_name": "Gion Machiya Stay",
+            "is_live": false,
+            "location": "Gion, Kyoto",
+            "matched_amenities": [
+              "BREAKFAST",
+              "WIFI"
+            ],
+            "nightly_rates": [
+              252.75,
+              215.82
+            ],
+            "nights": 3,
+            "nights_available": 2,
+            "partially_available": true,
+            "refundable": true,
+            "room_type_id": "room-kyo-01-std",
+            "sold_out_dates": [
+              "2026-12-05"
+            ],
+            "star_rating": 4,
+            "total_price": null
+          }
+        ],
+        "hotel_ids": [
+          "hotel-kyo-01"
+        ],
+        "max_nightly_budget": 250.0,
+        "min_rating": 8.0,
+        "preferences": [
+          "quiet room"
+        ],
+        "required_amenities": [
+          "WIFI",
+          "BREAKFAST"
+        ],
+        "rooms": 1,
+        "total_found": 1,
+        "unmet_preferences": [
+          "preference_not_verified:quiet room"
+        ]
+      },
+      "method": "POST",
+      "path": "/api/search",
+      "status": 200
+    },
+    "search_lisbon_budget": {
+      "body": {
+        "check_in": "2026-12-04",
+        "check_out": "2026-12-07",
+        "destination": "Lisbon",
+        "guests": 2,
+        "hits": [
+          {
+            "amenities": [
+              "WIFI",
+              "BREAKFAST",
+              "AIR_CONDITIONING",
+              "RESTAURANT"
+            ],
+            "available": true,
+            "avg_nightly_rate": 152.44,
+            "cancellation_policy": "free",
+            "currency": "USD",
+            "data_source": "mock",
+            "guest_rating": 8.7,
+            "hotel_id": "hotel-lis-01",
+            "hotel_name": "Alfama Riverside Boutique",
+            "is_live": false,
+            "location": "Alfama, Lisbon",
+            "matched_amenities": [
+              "WIFI"
+            ],
+            "nightly_rates": [
+              153.32,
+              154.84,
+              149.16
+            ],
+            "nights": 3,
+            "nights_available": 3,
+            "partially_available": false,
+            "refundable": true,
+            "room_type_id": "room-lis-01-std",
+            "sold_out_dates": [],
+            "star_rating": 4,
+            "total_price": 457.32
+          },
+          {
+            "amenities": [
+              "WIFI",
+              "GYM",
+              "PARKING",
+              "AIR_CONDITIONING"
+            ],
+            "available": false,
+            "avg_nightly_rate": 106.76,
+            "cancellation_policy": "flexible",
+            "currency": "USD",
+            "data_source": "mock",
+            "guest_rating": 7.9,
+            "hotel_id": "hotel-lis-02",
+            "hotel_name": "Baixa Central Hotel",
+            "is_live": false,
+            "location": "Baixa, Lisbon",
+            "matched_amenities": [
+              "WIFI"
+            ],
+            "nightly_rates": [
+              128.35,
+              85.17
+            ],
+            "nights": 3,
+            "nights_available": 2,
+            "partially_available": true,
+            "refundable": true,
+            "room_type_id": "room-lis-02-std",
+            "sold_out_dates": [
+              "2026-12-05"
+            ],
+            "star_rating": 3,
+            "total_price": null
+          }
+        ],
+        "hotel_ids": [
+          "hotel-lis-01",
+          "hotel-lis-02"
+        ],
+        "max_nightly_budget": 160.0,
+        "min_rating": 7.0,
+        "preferences": [],
+        "required_amenities": [
+          "WIFI"
+        ],
+        "rooms": 1,
+        "total_found": 2,
+        "unmet_preferences": []
+      },
+      "method": "POST",
+      "path": "/api/search",
+      "status": 200
+    }
+  },
+  "server_name": "staysmart-hotels",
+  "service": "staysmart-api",
+  "transport": "stdio"
+}
