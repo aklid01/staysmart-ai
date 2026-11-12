@@ -181,7 +181,29 @@ class ComparisonRow(StrictModel):
 
 class HotelComparison(StrictModel):
     rows: list[ComparisonRow]
+    unresolved_hotel_ids: list[str] = Field(default_factory=list)
+    check_in: date
+    check_out: date
+    rooms: int
+    guests: int
+    currency: str
     unmet_preferences: list[str]
+    data_source: Literal["mock"] = "mock"
+    is_live: Literal[False] = False
+
+
+class HotelPolicyInfo(StrictModel):
+    hotel_id: str
+    hotel_name: str
+    general_info: str
+    cancellation_policy: CancellationPolicy
+    pet_policy: str
+    pet_policy_source: Literal["amenities", "not_provided"]
+    check_in_time: str | None = None
+    check_out_time: str | None = None
+    information_gaps: list[str] = Field(default_factory=list)
+    data_source: Literal["mock"] = "mock"
+    is_live: Literal[False] = False
     data_source: Literal["mock"] = "mock"
     is_live: Literal[False] = False
 
