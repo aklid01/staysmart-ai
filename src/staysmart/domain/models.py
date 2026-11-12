@@ -204,8 +204,6 @@ class HotelPolicyInfo(StrictModel):
     information_gaps: list[str] = Field(default_factory=list)
     data_source: Literal["mock"] = "mock"
     is_live: Literal[False] = False
-    data_source: Literal["mock"] = "mock"
-    is_live: Literal[False] = False
 
 
 def validate_stay_window(check_in: date, check_out: date) -> None:
