@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "dataset_name": "Mock hotel dataset v1",
+  "currency": "USD",
+  "anchor_date": "2026-11-01",
+  "window_days": 365,
+  "destinations": [
+    {
+      "destination_id": "lisbon-pt",
+      "city": "Lisbon",
+      "country": "Portugal",
+      "region": "Europe",
+      "timezone": "Europe/Lisbon"
+    },
+    {
+      "destination_id": "kyoto-jp",
+      "city": "Kyoto",
+      "country": "Japan",
+      "region": "Asia",
+      "timezone": "Asia/Tokyo"
+    },
+    {
+      "destination_id": "vancouver-ca",
+      "city": "Vancouver",
+      "country": "Canada",
+      "region": "North America",
+      "timezone": "America/Vancouver"
+    }
+  ],
+  "hotels": [
+    {
+      "hotel_id": "hotel-lis-01",
+      "name": "Alfama Riverside Boutique",
+      "destination_id": "lisbon-pt",
+      "location": "Alfama, Lisbon",
+      "star_rating": 4,
+      "guest_rating": 8.7,
+      "review_count": 412,
+      "amenities": ["WIFI", "BREAKFAST", "AIR_CONDITIONING", "RESTAURANT"],
+      "room_types": [
+        {
+          "room_type_id": "room-lis-01-std",
+          "name": "Standard Double",
+          "max_occupancy": 2,
+          "bed_type": "queen",
+          "base_nightly_rate": 120.0,
+          "total_rooms": 8,
+          "amenities": ["WIFI", "AIR_CONDITIONING"]
+        },
+        {
+          "room_type_id": "room-lis-01-suite",
+          "name": "River Suite",
+          "max_occupancy": 3,
+          "bed_type": "king",
+          "base_nightly_rate": 195.0,
+          "total_rooms": 4,
+          "amenities": ["WIFI", "BREAKFAST", "AIR_CONDITIONING"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "free",
+        "refundable": true,
+        "free_cancellation_days": 2,
+        "penalty_nights": 0,
+        "description": "Free cancellation until 2 days before check-in."
+      },
+      "description": "Small riverside boutique property within walking distance of Alfama viewpoints.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-lis-02",
+      "name": "Baixa Central Hotel",
+      "destination_id": "lisbon-pt",
+      "location": "Baixa, Lisbon",
+      "star_rating": 3,
+      "guest_rating": 7.9,
+      "review_count": 980,
+      "amenities": ["WIFI", "GYM", "PARKING", "AIR_CONDITIONING"],
+      "room_types": [
+        {
+          "room_type_id": "room-lis-02-std",
+          "name": "Standard Twin",
+          "max_occupancy": 2,
+          "bed_type": "twin",
+          "base_nightly_rate": 89.0,
+          "total_rooms": 12,
+          "amenities": ["WIFI", "AIR_CONDITIONING"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "flexible",
+        "refundable": true,
+        "free_cancellation_days": 1,
+        "penalty_nights": 0,
+        "description": "Free cancellation until 1 day before check-in."
+      },
+      "description": "Mid-range business hotel near Baixa transit links.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-lis-03",
+      "name": "Belem Garden Spa",
+      "destination_id": "lisbon-pt",
+      "location": "Belem, Lisbon",
+      "star_rating": 5,
+      "guest_rating": 9.2,
+      "review_count": 233,
+      "amenities": ["WIFI", "POOL", "SPA", "BREAKFAST", "PARKING", "PET_FRIENDLY", "RESTAURANT"],
+      "room_types": [
+        {
+          "room_type_id": "room-lis-03-std",
+          "name": "Garden Deluxe",
+          "max_occupancy": 2,
+          "bed_type": "king",
+          "base_nightly_rate": 260.0,
+          "total_rooms": 6,
+          "amenities": ["WIFI", "BREAKFAST", "AIR_CONDITIONING"]
+        },
+        {
+          "room_type_id": "room-lis-03-family",
+          "name": "Family Suite",
+          "max_occupancy": 4,
+          "bed_type": "two queens",
+          "base_nightly_rate": 340.0,
+          "total_rooms": 3,
+          "amenities": ["WIFI", "BREAKFAST", "PET_FRIENDLY"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "partial",
+        "refundable": true,
+        "free_cancellation_days": 7,
+        "penalty_nights": 1,
+        "description": "Refundable until 7 days before check-in, less a one-night penalty."
+      },
+      "description": "Five-star spa property with gardens and a pet-friendly family wing.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-lis-04",
+      "name": "Chiado Budget Rooms",
+      "destination_id": "lisbon-pt",
+      "location": "Chiado, Lisbon",
+      "star_rating": 2,
+      "guest_rating": 6.8,
+      "review_count": 1500,
+      "amenities": ["WIFI"],
+      "room_types": [
+        {
+          "room_type_id": "room-lis-04-std",
+          "name": "Compact Double",
+          "max_occupancy": 2,
+          "bed_type": "double",
+          "base_nightly_rate": 55.0,
+          "total_rooms": 10,
+          "amenities": ["WIFI"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "non_refundable",
+        "refundable": false,
+        "free_cancellation_days": 0,
+        "penalty_nights": 0,
+        "description": "Non-refundable rate with no changes permitted."
+      },
+      "description": "Basic no-frills rooms in a central Chiado building.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-kyo-01",
+      "name": "Gion Machiya Stay",
+      "destination_id": "kyoto-jp",
+      "location": "Gion, Kyoto",
+      "star_rating": 4,
+      "guest_rating": 9.0,
+      "review_count": 310,
+      "amenities": ["WIFI", "BREAKFAST", "AIR_CONDITIONING", "PET_FRIENDLY"],
+      "room_types": [
+        {
+          "room_type_id": "room-kyo-01-std",
+          "name": "Tatami Double",
+          "max_occupancy": 2,
+          "bed_type": "futon",
+          "base_nightly_rate": 180.0,
+          "total_rooms": 5,
+          "amenities": ["WIFI", "BREAKFAST", "AIR_CONDITIONING"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "partial",
+        "refundable": true,
+        "free_cancellation_days": 5,
+        "penalty_nights": 1,
+        "description": "Refundable until 5 days before check-in, less a one-night penalty."
+      },
+      "description": "Restored machiya townhouse with breakfast service near Gion.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-kyo-02",
+      "name": "Kyoto Station Tower",
+      "destination_id": "kyoto-jp",
+      "location": "Shimogyo Ward, Kyoto",
+      "star_rating": 4,
+      "guest_rating": 8.4,
+      "review_count": 1200,
+      "amenities": ["WIFI", "GYM", "RESTAURANT", "SHUTTLE", "AIR_CONDITIONING"],
+      "room_types": [
+        {
+          "room_type_id": "room-kyo-02-std",
+          "name": "City Double",
+          "max_occupancy": 2,
+          "bed_type": "queen",
+          "base_nightly_rate": 150.0,
+          "total_rooms": 14,
+          "amenities": ["WIFI", "AIR_CONDITIONING"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "free",
+        "refundable": true,
+        "free_cancellation_days": 3,
+        "penalty_nights": 0,
+        "description": "Free cancellation until 3 days before check-in."
+      },
+      "description": "Large station-side hotel with a shuttle and fitness centre.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-kyo-03",
+      "name": "Arashiyama Ryokan",
+      "destination_id": "kyoto-jp",
+      "location": "Arashiyama, Kyoto",
+      "star_rating": 5,
+      "guest_rating": 9.4,
+      "review_count": 180,
+      "amenities": ["WIFI", "SPA", "BREAKFAST", "RESTAURANT"],
+      "room_types": [
+        {
+          "room_type_id": "room-kyo-03-std",
+          "name": "Garden Ryokan Room",
+          "max_occupancy": 2,
+          "bed_type": "futon",
+          "base_nightly_rate": 320.0,
+          "total_rooms": 4,
+          "amenities": ["WIFI", "BREAKFAST", "SPA"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "non_refundable",
+        "refundable": false,
+        "free_cancellation_days": 0,
+        "penalty_nights": 0,
+        "description": "Non-refundable ryokan rate."
+      },
+      "description": "Traditional ryokan with garden views and an on-site spa.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-van-01",
+      "name": "Coal Harbour Grand",
+      "destination_id": "vancouver-ca",
+      "location": "Coal Harbour, Vancouver",
+      "star_rating": 5,
+      "guest_rating": 8.9,
+      "review_count": 760,
+      "amenities": ["WIFI", "POOL", "GYM", "SPA", "PARKING", "RESTAURANT", "AIR_CONDITIONING"],
+      "room_types": [
+        {
+          "room_type_id": "room-van-01-std",
+          "name": "Harbour King",
+          "max_occupancy": 2,
+          "bed_type": "king",
+          "base_nightly_rate": 240.0,
+          "total_rooms": 10,
+          "amenities": ["WIFI", "AIR_CONDITIONING"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "free",
+        "refundable": true,
+        "free_cancellation_days": 2,
+        "penalty_nights": 0,
+        "description": "Free cancellation until 2 days before check-in."
+      },
+      "description": "Waterfront business hotel with pool, spa and covered parking.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-van-02",
+      "name": "Granville Loft Suites",
+      "destination_id": "vancouver-ca",
+      "location": "Granville, Vancouver",
+      "star_rating": 3,
+      "guest_rating": 7.6,
+      "review_count": 540,
+      "amenities": ["WIFI", "GYM", "PET_FRIENDLY", "PARKING"],
+      "room_types": [
+        {
+          "room_type_id": "room-van-02-std",
+          "name": "Loft Suite",
+          "max_occupancy": 2,
+          "bed_type": "queen",
+          "base_nightly_rate": 110.0,
+          "total_rooms": 7,
+          "amenities": ["WIFI", "PET_FRIENDLY"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "flexible",
+        "refundable": true,
+        "free_cancellation_days": 1,
+        "penalty_nights": 0,
+        "description": "Free cancellation until 1 day before check-in."
+      },
+      "description": "Converted loft suites with a small gym and pet-friendly floors.",
+      "currency": "USD"
+    },
+    {
+      "hotel_id": "hotel-van-03",
+      "name": "Stanley Park Lodge",
+      "destination_id": "vancouver-ca",
+      "location": "West End, Vancouver",
+      "star_rating": 4,
+      "guest_rating": 8.5,
+      "review_count": 420,
+      "amenities": ["WIFI", "BREAKFAST", "PARKING", "PET_FRIENDLY", "RESTAURANT"],
+      "room_types": [
+        {
+          "room_type_id": "room-van-03-std",
+          "name": "Park View Double",
+          "max_occupancy": 2,
+          "bed_type": "queen",
+          "base_nightly_rate": 165.0,
+          "total_rooms": 6,
+          "amenities": ["WIFI", "BREAKFAST", "PET_FRIENDLY"]
+        }
+      ],
+      "cancellation_policy": {
+        "policy_type": "partial",
+        "refundable": true,
+        "free_cancellation_days": 7,
+        "penalty_nights": 2,
+        "description": "Refundable until 7 days before check-in, less a two-night penalty."
+      },
+      "description": "Lodge-style property beside Stanley Park with a pet-friendly restaurant patio.",
+      "currency": "USD"
+    }
+  ],
+  "sold_out_overrides": {
+    "hotel-kyo-01|room-kyo-01-std": ["2026-12-05"],
+    "hotel-lis-01|room-lis-01-suite": ["2026-12-06"],
+    "hotel-van-03|room-van-03-std": ["2026-12-04", "2026-12-05", "2026-12-06"]
+  },
+  "blackout_dates": {
+    "lisbon-pt": ["2026-12-25"]
+  }
+}
