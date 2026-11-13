@@ -142,6 +142,10 @@ body {
   white-space: pre-wrap;
 }
 
+.user-bubble-failed {
+  opacity: 0.55;
+}
+
 .assistant-block {
   display: flex;
   flex-direction: column;

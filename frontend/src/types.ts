@@ -115,6 +115,8 @@ export interface ToolTraceEntry {
   status: string
 }
 
+export type TurnOutcome = 'answered' | 'budget_exhausted' | 'turns_exhausted'
+
 export interface ChatResponse {
   message: string
   hotels: HotelEntry[]
@@ -122,13 +124,16 @@ export interface ChatResponse {
   sources: ContextSource[]
   tool_trace: ToolTraceEntry[]
   conversation_id: string
-  stopped_early: boolean
+  outcome: TurnOutcome
 }
+
+export type TurnStatus = 'sent' | 'failed'
 
 export interface ChatTurn {
   role: 'user' | 'assistant'
   content: string
   response?: ChatResponse
+  status?: TurnStatus
 }
 
 export interface PolicyInfo {

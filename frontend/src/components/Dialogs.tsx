@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, getHotelDetails, getHotelPolicies } from '../api'
 import type { HotelDetailsPayload, HotelEntry, PolicyInfo } from '../types'
 import { isSearchHit } from '../types'
+
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
 
 function DialogShell({
   title,
@@ -12,17 +15,51 @@ function DialogShell({
   onClose: () => void
   children: React.ReactNode
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const previous = document.activeElement as HTMLElement | null
+    const focusables = () =>
+      Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (element) => !element.hasAttribute('disabled'),
+      )
+    dialog.focus()
     const handler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (event.key !== 'Tab') return
+      const items = focusables()
+      if (items.length === 0) {
+        event.preventDefault()
+        return
+      }
+      const active = document.activeElement
+      if (event.shiftKey) {
+        if (active === items[0] || !dialog.contains(active)) {
+          event.preventDefault()
+          items[items.length - 1].focus()
+        }
+      } else if (active === items[items.length - 1] || !dialog.contains(active)) {
+        event.preventDefault()
+        items[0].focus()
+      }
     }
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    return () => {
+      window.removeEventListener('keydown', handler)
+      previous?.focus()
+    }
   }, [onClose])
 
   return (
     <div className="dialog-overlay" onClick={onClose} role="presentation">
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className="dialog"
         role="dialog"
         aria-modal="true"

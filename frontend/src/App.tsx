@@ -25,7 +25,15 @@ function MessageView({
   onPolicies: (hotelId: string) => void
 }) {
   if (turn.role === 'user') {
-    return <div className="bubble user-bubble">{turn.content}</div>
+    return (
+      <div
+        className={
+          turn.status === 'failed' ? 'bubble user-bubble user-bubble-failed' : 'bubble user-bubble'
+        }
+      >
+        {turn.content}
+      </div>
+    )
   }
   const response = turn.response
   return (
@@ -33,9 +41,14 @@ function MessageView({
       <div className="bubble assistant-bubble">
         <MarkdownLite text={turn.content} />
       </div>
-      {response && response.stopped_early && (
+      {response && response.outcome === 'budget_exhausted' && (
         <p className="notice">
           The answer was summarized early: the tool budget for this turn ran out.
+        </p>
+      )}
+      {response && response.outcome === 'turns_exhausted' && (
+        <p className="notice">
+          The answer was summarized early: the turn limit was reached before a final answer.
         </p>
       )}
       {response && response.hotels.length > 0 && (
@@ -63,8 +76,9 @@ export default function App() {
   const [draft, setDraft] = useState('')
   const [chatting, setChatting] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
-  const [detailsEntry, setDetailsEntry] = useState<HotelEntry | null>(null)
-  const [policyHotelId, setPolicyHotelId] = useState<string | null>(null)
+  const [dialog, setDialog] = useState<
+    { kind: 'details'; entry: HotelEntry } | { kind: 'policy'; hotelId: string } | null
+  >(null)
   const conversationIdRef = useRef(newConversationId())
   const threadRef = useRef<HTMLDivElement>(null)
 
@@ -84,6 +98,7 @@ export default function App() {
     setDraft('')
     setError(null)
     const history = turns
+      .filter((turn) => turn.status !== 'failed')
       .slice(-HISTORY_LIMIT)
       .map((turn) => ({ role: turn.role, content: turn.content }))
     setTurns((current) => [...current, { role: 'user', content: message }])
@@ -101,6 +116,16 @@ export default function App() {
     } catch (exc) {
       const apiError = exc instanceof ApiError ? exc : new ApiError('unknown_error', String(exc), 0)
       setError(apiError)
+      setTurns((current) => {
+        const next = [...current]
+        for (let i = next.length - 1; i >= 0; i--) {
+          if (next[i].role === 'user' && next[i].status !== 'failed') {
+            next[i] = { ...next[i], status: 'failed' }
+            break
+          }
+        }
+        return next
+      })
     } finally {
       setChatting(false)
     }
@@ -156,8 +181,8 @@ export default function App() {
           <MessageView
             key={index}
             turn={turn}
-            onDetails={setDetailsEntry}
-            onPolicies={setPolicyHotelId}
+            onDetails={(entry) => setDialog({ kind: 'details', entry })}
+            onPolicies={(hotelId) => setDialog({ kind: 'policy', hotelId })}
           />
         ))}
         {chatting && (
@@ -198,18 +223,18 @@ export default function App() {
         </button>
       </footer>
 
-      {detailsEntry && (
+      {dialog?.kind === 'details' && (
         <DetailsDialog
-          key={detailsEntry.hotel.hotel_id}
-          entry={detailsEntry}
-          onClose={() => setDetailsEntry(null)}
+          key={dialog.entry.hotel.hotel_id}
+          entry={dialog.entry}
+          onClose={() => setDialog(null)}
         />
       )}
-      {policyHotelId && (
+      {dialog?.kind === 'policy' && (
         <PolicyDialog
-          key={policyHotelId}
-          hotelId={policyHotelId}
-          onClose={() => setPolicyHotelId(null)}
+          key={dialog.hotelId}
+          hotelId={dialog.hotelId}
+          onClose={() => setDialog(null)}
         />
       )}
     </div>
