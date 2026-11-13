@@ -1,6 +1,5 @@
 {
   "artifact_version": 1,
-  "contract": "tests/phase6/CONTRACT.md",
   "frontend_url": "http://localhost:5173/",
   "backend_url": "http://127.0.0.1:8000",
   "viewport": {"width": 1280, "height": 720},
@@ -56,7 +55,7 @@
       "id": "t6_error_state",
       "action": "With the backend stopped, send a chat message.",
       "expected": "Error banner with the failure code; the user's message stays visible for retry.",
-      "observed": "User bubble remains; banner renders '[http_error] Request failed with status 502'. The Vite dev proxy answers its own 502 for the dead upstream with a non-JSON body, so the client shows the generic fallback code instead of a structured envelope code (the structured 503 llm_unavailable / rag_unavailable envelopes are covered by tests/phase5).",
+      "observed": "User bubble remains; banner renders '[http_error] Request failed with status 502'. The Vite dev proxy answers its own 502 for the dead upstream with a non-JSON body, so the client shows the generic fallback code instead of a structured envelope code (the structured 503 llm_unavailable / rag_unavailable envelopes are covered by the chat endpoint tests).",
       "result": "pass",
       "screenshot": "t6_error_banner.png"
     }
