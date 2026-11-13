@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 MAX_STAY_NIGHTS = 30
+PREFERENCE_NOT_VERIFIED = "preference_not_verified"
 
 
 class StrictModel(BaseModel):
@@ -118,6 +119,26 @@ class StayQuote(StrictModel):
     sold_out_dates: list[date]
     data_source: Literal["mock"] = "mock"
     is_live: Literal[False] = False
+
+    @model_validator(mode="after")
+    def validate_quote_consistency(self) -> "StayQuote":
+        if self.nights != (self.check_out - self.check_in).days:
+            raise ValueError("nights does not match the check-in/check-out range")
+        if not 0 <= self.nights_available <= self.nights:
+            raise ValueError("nights_available must be between 0 and nights")
+        if len(self.nightly_rates) != self.nights_available:
+            raise ValueError("nightly_rates must carry one rate per available night")
+        if len(self.sold_out_dates) != self.nights - self.nights_available:
+            raise ValueError("sold_out_dates must carry one date per unavailable night")
+        if (self.avg_nightly_rate is not None) != (self.nights_available > 0):
+            raise ValueError("avg_nightly_rate is required exactly when some night is available")
+        if self.available != (self.nights_available == self.nights):
+            raise ValueError("available must be true exactly when every night is available")
+        if self.partially_available != (0 < self.nights_available < self.nights):
+            raise ValueError("partially_available must be true exactly when some but not all nights are available")
+        if (self.total_price is not None) != self.available:
+            raise ValueError("total_price is required exactly when the stay is fully available")
+        return self
 
 
 class HotelSearchHit(StrictModel):

@@ -65,5 +65,5 @@ async def test_stdio_subprocess_carries_error_results_without_failing():
 
         assert result.is_error is True
         assert result.content[0].text == (
-            "Error executing tool get_hotel_details: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+            "Error executing tool get_hotel_details: unknown_hotel: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
         )

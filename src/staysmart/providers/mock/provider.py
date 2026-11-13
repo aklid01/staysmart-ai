@@ -12,6 +12,7 @@ from staysmart.domain.errors import (
     UnknownRoomTypeError,
 )
 from staysmart.domain.models import (
+    PREFERENCE_NOT_VERIFIED,
     AvailabilityResult,
     Hotel,
     HotelDetails,
@@ -271,7 +272,7 @@ class MockHotelProvider:
             for hit in hits
         ).lower()
         return [
-            f"preference_not_verified:{preference}"
+            f"{PREFERENCE_NOT_VERIFIED}:{preference}"
             for preference in query.preferences
             if preference.strip().lower() not in verified
         ]

@@ -2,21 +2,24 @@ import logging
 from datetime import date
 from typing import Sequence
 
-from staysmart.domain.errors import InvalidDateError, UnknownHotelError
-from staysmart.domain.models import ComparisonRow, HotelComparison, HotelDetails
+from staysmart.domain.errors import CurrencyMismatchError, InvalidDateError, UnknownHotelError
+from staysmart.domain.models import (
+    PREFERENCE_NOT_VERIFIED,
+    ComparisonRow,
+    HotelComparison,
+    HotelDetails,
+    validate_stay_window,
+)
 from staysmart.providers.base import HotelProvider
-
-PREFERENCE_SCHEME = "preference_not_verified"
 
 logger = logging.getLogger("staysmart")
 
 
 def _validate_stay_length(check_in: date, check_out: date) -> None:
-    nights = (check_out - check_in).days
-    if nights < 1:
-        raise InvalidDateError("check_out must be after check_in")
-    if nights > 30:
-        raise InvalidDateError("stay length must be between 1 and 30 nights")
+    try:
+        validate_stay_window(check_in, check_out)
+    except ValueError as exc:
+        raise InvalidDateError(str(exc)) from exc
 
 
 def _verified_text(details: HotelDetails) -> str:
@@ -53,7 +56,9 @@ def _row(details: HotelDetails) -> ComparisonRow:
 def _unmet_preferences(preferences: Sequence[str], verified_texts: list[str]) -> list[str]:
     verified = " ".join(verified_texts)
     return [
-        f"{PREFERENCE_SCHEME}:{preference}" for preference in preferences if preference.strip().lower() not in verified
+        f"{PREFERENCE_NOT_VERIFIED}:{preference}"
+        for preference in preferences
+        if preference.strip().lower() not in verified
     ]
 
 
@@ -71,26 +76,31 @@ async def compare_hotels(
     _validate_stay_length(check_in, check_out)
     unique_ids = list(dict.fromkeys(hotel_ids))
 
-    rows: list[ComparisonRow] = []
+    resolved: list[HotelDetails] = []
     unresolved: list[str] = []
-    verified_texts: list[str] = []
-    resolved_currency: str | None = None
     for hotel_id in unique_ids:
         try:
-            details = await provider.get_hotel_details(
-                hotel_id,
-                check_in=check_in,
-                check_out=check_out,
-                rooms=rooms,
-                guests=guests,
+            resolved.append(
+                await provider.get_hotel_details(
+                    hotel_id,
+                    check_in=check_in,
+                    check_out=check_out,
+                    rooms=rooms,
+                    guests=guests,
+                )
             )
         except UnknownHotelError:
             unresolved.append(hotel_id)
-            continue
-        rows.append(_row(details))
-        verified_texts.append(_verified_text(details))
-        if resolved_currency is None:
-            resolved_currency = details.currency
+
+    currencies = {details.currency for details in resolved}
+    if len(currencies) > 1:
+        raise CurrencyMismatchError(
+            f"cannot compare hotels priced in different currencies: {', '.join(sorted(currencies))}"
+        )
+    currency = next(iter(currencies)) if currencies else currency
+
+    rows = [_row(details) for details in resolved]
+    verified_texts = [_verified_text(details) for details in resolved]
 
     logger.info(
         "compare requested=%d resolved=%d unresolved=%d",
@@ -105,6 +115,6 @@ async def compare_hotels(
         check_out=check_out,
         rooms=rooms,
         guests=guests,
-        currency=resolved_currency or currency,
+        currency=currency,
         unmet_preferences=_unmet_preferences(preferences, verified_texts),
     )
