@@ -124,7 +124,7 @@ async def test_search_hotels_unknown_destination_is_an_error_result(mcp_server):
         assert result.is_error is True
         assert result.structured_content is None
         assert result.content[0].text == (
-            "Error executing tool search_hotels: No destination matches 'Atlantis' in the mock dataset"
+            "Error executing tool search_hotels: unknown_destination: No destination matches 'Atlantis' in the mock dataset"
         )
 
 
@@ -136,7 +136,7 @@ async def test_search_hotels_reversed_dates_are_an_error_result(mcp_server):
         )
 
         assert result.is_error is True
-        assert result.content[0].text == ("Error executing tool search_hotels: check_out must be after check_in")
+        assert result.content[0].text == ("Error executing tool search_hotels: invalid_date: check_out must be after check_in")
 
 
 async def test_search_hotels_dates_beyond_the_window_are_an_error_result(mcp_server):
@@ -214,7 +214,7 @@ async def test_get_hotel_details_unknown_hotel_is_an_error_result(mcp_server):
 
         assert result.is_error is True
         assert result.content[0].text == (
-            "Error executing tool get_hotel_details: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+            "Error executing tool get_hotel_details: unknown_hotel: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
         )
 
 
@@ -272,7 +272,7 @@ async def test_check_availability_unknown_room_type_is_an_error_result(mcp_serve
 
         assert result.is_error is True
         assert result.content[0].text == (
-            "Error executing tool check_availability: Unknown room_type_id 'room-lis-02-suite' for hotel 'hotel-lis-02'"
+            "Error executing tool check_availability: unknown_room_type: Unknown room_type_id 'room-lis-02-suite' for hotel 'hotel-lis-02'"
         )
 
 
@@ -333,7 +333,7 @@ async def test_get_hotel_policies_unknown_hotel_is_an_error_result(mcp_server):
 
         assert result.is_error is True
         assert result.content[0].text == (
-            "Error executing tool get_hotel_policies: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
+            "Error executing tool get_hotel_policies: unknown_hotel: Unknown hotel_id 'hotel-xxx-99' in the mock dataset"
         )
 
 

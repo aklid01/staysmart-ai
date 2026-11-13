@@ -27,7 +27,7 @@ def tool_errors(fn):
         try:
             return await fn(*args, **kwargs)
         except StaySmartError as exc:
-            raise ToolError(str(exc)) from exc
+            raise ToolError(f"{exc.code}: {exc.message}") from exc
 
     return wrapper
 

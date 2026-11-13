@@ -7,7 +7,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from staysmart.agent.llm import ChatLLM, OpenAICompatLLM
 from staysmart.app.errors import install_error_handlers
-from staysmart.app.mcp_client import McpConnector, StdioMcpConnector
+from staysmart.app.mcp_client import McpConnector, ReconnectingMcpSession, StdioMcpConnector
 from staysmart.app.routes import register_routes
 from staysmart.config import Settings
 from staysmart.rag.service import RagRetriever
@@ -32,11 +32,15 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: Starlette):
-        async with connector.connect() as session:
-            app.state.mcp = session
-            logger.info("MCP session established")
+        session = ReconnectingMcpSession(connector)
+        await session.open()
+        app.state.mcp = session
+        logger.info("MCP session established")
+        try:
             yield
-        logger.info("MCP session closed")
+        finally:
+            await session.close()
+            logger.info("MCP session closed")
 
     app = Starlette(lifespan=lifespan)
     app.state.settings = settings

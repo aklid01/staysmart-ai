@@ -34,3 +34,16 @@ class CurrencyMismatchError(StaySmartError):
 
 class ProviderError(StaySmartError):
     code = "provider_error"
+
+
+ERRORS_BY_CODE: dict[str, type[StaySmartError]] = {
+    error.code: error
+    for error in (
+        InvalidDateError,
+        UnknownDestinationError,
+        UnknownHotelError,
+        UnknownRoomTypeError,
+        CurrencyMismatchError,
+        ProviderError,
+    )
+}

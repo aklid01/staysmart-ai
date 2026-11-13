@@ -91,12 +91,15 @@ async def _json_model(request: Request, model_cls: type[BaseModel]) -> BaseModel
 
 async def _call_tool(session: Any, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     try:
-        return await session.call_tool(name, arguments)
+        result = await session.call_tool(name, arguments)
     except ToolFailureError as exc:
-        raise classify_tool_failure(exc.message) from exc
+        raise classify_tool_failure(exc.message, exc.code) from exc
     except Exception as exc:
         logger.warning("MCP tool call %s failed at transport level: %s", name, exc)
         raise unavailable_error(f"{type(exc).__name__} while calling tool {name}") from exc
+    if not isinstance(result, dict):
+        raise ApiError(502, "tool_error", f"tool {name} returned no structured payload", "ToolError")
+    return result
 
 
 async def health(request: Request) -> JSONResponse:
@@ -187,6 +190,7 @@ def _get_agent(request: Request) -> HotelAgent:
             app.state.retriever = RagRetriever.load(
                 app.state.settings.rag_index_path,
                 FastEmbedEmbedder(app.state.settings.rag_model),
+                corpus_path=app.state.settings.rag_corpus_path,
             )
         except RagError as exc:
             raise ApiError(

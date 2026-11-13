@@ -128,8 +128,8 @@
         "conversation_id": "demo-conversation",
         "hotels": [],
         "message": "This API demo records a scripted model reply so the artifact stays deterministic; the real agent demo lives in scripts/demo_agent.py.",
+        "outcome": "answered",
         "sources": [],
-        "stopped_early": false,
         "tool_trace": []
       },
       "method": "POST",

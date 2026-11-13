@@ -53,8 +53,20 @@ _TOOL_FAILURE_MAP: tuple[tuple[str, int, str, str], ...] = (
     ("outside the mock dataset window", 400, "invalid_date", "InvalidDateError"),
 )
 
+_TOOL_CODE_MAP: dict[str, tuple[int, str]] = {
+    "unknown_destination": (404, "UnknownDestinationError"),
+    "unknown_hotel": (404, "UnknownHotelError"),
+    "unknown_room_type": (404, "UnknownRoomTypeError"),
+    "invalid_date": (400, "InvalidDateError"),
+    "currency_mismatch": (502, "CurrencyMismatchError"),
+    "provider_error": (502, "ProviderError"),
+}
 
-def classify_tool_failure(message: str) -> ApiError:
+
+def classify_tool_failure(message: str, code: str | None = None) -> ApiError:
+    if code is not None and code in _TOOL_CODE_MAP:
+        status_code, error_type = _TOOL_CODE_MAP[code]
+        return ApiError(status_code, code, message, error_type)
     for fragment, status_code, code, error_type in _TOOL_FAILURE_MAP:
         if fragment in message:
             return ApiError(status_code, code, message, error_type)
