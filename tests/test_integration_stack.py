@@ -3,7 +3,7 @@ from pathlib import Path
 from staysmart.agent.llm import LLMCompletion, LLMToolCall
 from staysmart.providers.mock.dataset import load_dataset
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 DATASET_PATH = ROOT / "data" / "hotels" / "v1" / "hotels.json"
 
 STAY = {"check_in": "2026-12-04", "check_out": "2026-12-07"}

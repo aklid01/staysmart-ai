@@ -11,7 +11,7 @@ from staysmart.config import Settings
 
 
 def _root():
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[1]
 
 
 ARTIFACT_SPECS = [

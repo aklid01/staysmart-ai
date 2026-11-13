@@ -360,11 +360,12 @@ def test_policies_for_non_pet_hotel_report_gaps(client):
     assert body["information_gaps"] == ["check_in_time", "check_out_time", "pet_policy"]
 
 
-def test_chat_maps_unavailable_llm_to_503(settings, mcp_server):
+def test_chat_maps_unavailable_llm_to_503(settings, mcp_server, retriever):
     app = create_app(
         settings,
         connector=InProcessMcpConnector(mcp_server),
         llm=ScriptedLLM([LLMUnavailableError("connection refused")]),
+        retriever=retriever,
     )
     with TestClient(app) as client:
         response = client.post("/api/chat", json={"message": "Find a hotel in Kyoto"})

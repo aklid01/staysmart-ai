@@ -1,19 +1,25 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+GOLDEN_PATH = ROOT / "tests" / "golden" / "mcp_demo.json"
+ARTIFACT_PATH = ROOT / "artifacts" / "mcp_demo.json"
+DEMO_SCRIPT = ROOT / "scripts" / "demo_mcp.py"
 
 
-def test_e2e_snapshot_matches_spec_authored_golden(golden_path, artifact_path, demo_script):
+def test_e2e_snapshot_matches_spec_authored_golden():
     completed = subprocess.run(
-        [sys.executable, str(demo_script)],
-        cwd=str(demo_script.parent.parent),
+        [sys.executable, str(DEMO_SCRIPT)],
+        cwd=str(ROOT),
         capture_output=True,
         text=True,
     )
     assert completed.returncode == 0, completed.stderr
 
-    artifact = artifact_path.read_bytes().replace(b"\r\n", b"\n")
-    golden = golden_path.read_bytes().replace(b"\r\n", b"\n")
+    artifact = ARTIFACT_PATH.read_bytes().replace(b"\r\n", b"\n")
+    golden = GOLDEN_PATH.read_bytes().replace(b"\r\n", b"\n")
     assert artifact == golden
 
     data = json.loads(artifact)

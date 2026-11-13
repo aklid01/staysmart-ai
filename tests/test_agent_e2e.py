@@ -2,9 +2,14 @@ import json
 import socket
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+ARTIFACT_PATH = ROOT / "artifacts" / "agent_demo.json"
+DEMO_SCRIPT = ROOT / "scripts" / "demo_agent.py"
 
 
 def _endpoint_reachable() -> bool:
@@ -20,16 +25,16 @@ def _endpoint_reachable() -> bool:
 
 
 @pytest.mark.skipif(not _endpoint_reachable(), reason="LLM endpoint not reachable")
-def test_agent_e2e_artifact_records_real_model_run(demo_script, artifact_path):
+def test_agent_e2e_artifact_records_real_model_run():
     completed = subprocess.run(
-        [sys.executable, str(demo_script)],
-        cwd=str(demo_script.parent.parent),
+        [sys.executable, str(DEMO_SCRIPT)],
+        cwd=str(ROOT),
         capture_output=True,
         text=True,
     )
     assert completed.returncode == 0, completed.stderr
 
-    data = json.loads(artifact_path.read_text(encoding="utf-8"))
+    data = json.loads(ARTIFACT_PATH.read_text(encoding="utf-8"))
     assert data["artifact_version"] == 1
     assert data["model"]
     assert data["data_source"] == "mock"

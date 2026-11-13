@@ -7,7 +7,7 @@ from starlette.routing import Route
 from staysmart.app.routes import register_routes
 from staysmart.config import Settings
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 
 ENV_SETTINGS = {
     "HOTEL_PROVIDER": "hotel_provider",
@@ -71,7 +71,7 @@ def test_readme_quickstart_references_existing_modules():
         "uv run python -m staysmart.app",
         "uv run python -m staysmart.rag ingest",
         "npm run dev",
-        "uv run pytest tests/phase1 tests/phase2 tests/phase3 tests/phase4 tests/phase5",
+        "uv run pytest",
     ]:
         assert command in readme, f"README quickstart missing: {command}"
 
