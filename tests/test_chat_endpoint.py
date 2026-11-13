@@ -32,7 +32,7 @@ def test_chat_returns_structured_response(client, agent_llm):
     body = response.json()
     assert body["message"] == "Gion Machiya Stay is the pick."
     assert body["conversation_id"] == "conv-42"
-    assert body["stopped_early"] is False
+    assert body["outcome"] == "answered"
     assert body["tool_trace"] == [{"tool": "search_hotels", "status": "ok"}]
     assert "hotel-kyo-01" in {entry["hotel"]["hotel_id"] for entry in body["hotels"]}
     assert body["comparison"] is None

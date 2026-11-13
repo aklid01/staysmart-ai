@@ -3,8 +3,9 @@ import json
 import pytest
 from mcp import Client
 
-from staysmart.agent.agent import HotelAgent
+from staysmart.agent.agent import HotelAgent, TurnOutcome
 from staysmart.agent.llm import LLMCompletion, LLMToolCall, ScriptedLLM
+from staysmart.agent.tools import ToolStatus
 from staysmart.app.mcp_client import SdkMcpSession
 
 KYOTO_SEARCH_ARGS = {
@@ -39,7 +40,7 @@ async def test_search_tool_call_then_grounded_answer(mcp_server, retriever):
     result = await run_agent(llm, mcp_server, retriever)
 
     assert result.message.startswith("Gion Machiya Stay")
-    assert result.stopped_early is False
+    assert result.outcome is TurnOutcome.ANSWERED
     assert [entry.model_dump() for entry in result.tool_trace] == [{"tool": "search_hotels", "status": "ok"}]
     assert {entry["hotel"]["hotel_id"] for entry in result.hotels} == {
         "hotel-kyo-01",
@@ -144,7 +145,7 @@ async def test_turn_limit_stops_tool_loops_with_forced_summary(mcp_server, retri
 
     result = await run_agent(llm, mcp_server, retriever)
 
-    assert result.stopped_early is True
+    assert result.outcome is TurnOutcome.TURNS_EXHAUSTED
     assert result.message == "Forced summary of findings."
     assert llm.completed_calls == 7
     assert sum(entry.status == "ok" for entry in result.tool_trace) == 6
@@ -189,9 +190,59 @@ async def test_tool_budget_limits_executed_calls(mcp_server, retriever):
 
     result = await run_agent(llm, mcp_server, retriever)
 
-    assert result.stopped_early is True
-    assert sum(entry.status == "ok" for entry in result.tool_trace) == 12
+    assert result.outcome is TurnOutcome.BUDGET_EXHAUSTED
+    assert sum(entry.status is ToolStatus.OK for entry in result.tool_trace) == 12
     assert llm.completed_calls == 5
+
+
+async def test_budget_exhaustion_mid_batch_answers_every_tool_call(mcp_server, retriever):
+    date_pairs = [
+        (4, 5),
+        (5, 6),
+        (6, 7),
+        (7, 8),
+        (8, 9),
+        (9, 10),
+        (10, 11),
+        (11, 12),
+        (12, 13),
+        (13, 14),
+        (14, 15),
+        (15, 16),
+        (16, 17),
+    ]
+    completions = []
+    call_index = 0
+    for batch_size in (3, 3, 7):
+        calls = [
+            LLMToolCall(
+                id=f"call-{call_index + offset}",
+                name="get_hotel_details",
+                arguments={
+                    "hotel_id": "hotel-lis-01",
+                    "check_in": f"2026-12-{date_pairs[call_index + offset][0]:02d}",
+                    "check_out": f"2026-12-{date_pairs[call_index + offset][1]:02d}",
+                },
+            )
+            for offset in range(batch_size)
+        ]
+        completions.append(LLMCompletion(content=None, tool_calls=calls))
+        call_index += batch_size
+    llm = ScriptedLLM([*completions, LLMCompletion(content="Budget summary.", tool_calls=[])])
+
+    result = await run_agent(llm, mcp_server, retriever)
+
+    assert result.outcome is TurnOutcome.BUDGET_EXHAUSTED
+    assert sum(entry.status is ToolStatus.OK for entry in result.tool_trace) == 12
+    summary_request = llm.requests[-1]["messages"]
+    assistant_calls = [message for message in summary_request if "tool_calls" in message]
+    answered_ids = {message["tool_call_id"] for message in summary_request if message["role"] == "tool"}
+    emitted_ids = {call["id"] for message in assistant_calls for call in message["tool_calls"]}
+    assert answered_ids == emitted_ids
+    budget_messages = [
+        message for message in summary_request if message["role"] == "tool" and "budget" in message["content"]
+    ]
+    assert len(budget_messages) == 1
 
 
 async def test_search_knowledge_collects_sources(mcp_server, retriever):

@@ -1,12 +1,18 @@
 import json
 import logging
 import uuid
+from enum import Enum
 from typing import Any
 
 from staysmart.agent.errors import AgentError
 from staysmart.agent.llm import ChatLLM
 from staysmart.agent.prompts import SYSTEM_PROMPT
-from staysmart.agent.tools import KNOWLEDGE_TOOL, canonical_arguments, execute_agent_tool
+from staysmart.agent.tools import (
+    KNOWLEDGE_TOOL,
+    ToolStatus,
+    canonical_arguments,
+    execute_agent_tool,
+)
 from staysmart.domain.models import StrictModel
 from staysmart.rag.models import ContextSource
 from staysmart.rag.service import RagRetriever
@@ -17,9 +23,15 @@ MAX_TURNS = 6
 MAX_TOOL_CALLS = 12
 
 
+class TurnOutcome(str, Enum):
+    ANSWERED = "answered"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    TURNS_EXHAUSTED = "turns_exhausted"
+
+
 class TraceEntry(StrictModel):
     tool: str
-    status: str
+    status: ToolStatus
 
 
 class AgentTurnResult(StrictModel):
@@ -29,7 +41,7 @@ class AgentTurnResult(StrictModel):
     conversation_id: str
     sources: list[ContextSource] = []
     comparison: dict[str, Any] | None = None
-    stopped_early: bool = False
+    outcome: TurnOutcome = TurnOutcome.ANSWERED
 
 
 class HotelAgent:
@@ -61,11 +73,11 @@ class HotelAgent:
         executed_keys: set[str] = set()
         executed_count = 0
         final_message: str | None = None
-        budget_hit = False
+        outcome = TurnOutcome.TURNS_EXHAUSTED
 
         for _turn in range(MAX_TURNS):
             if executed_count >= MAX_TOOL_CALLS:
-                budget_hit = True
+                outcome = TurnOutcome.BUDGET_EXHAUSTED
                 break
             completion = await self._llm.complete(messages, tools=self._tool_specs())
             if not completion.tool_calls:
@@ -95,13 +107,22 @@ class HotelAgent:
                     ],
                 }
             )
+            budget_hit = False
             for call in completion.tool_calls:
-                if executed_count >= MAX_TOOL_CALLS:
+                if not budget_hit and executed_count >= MAX_TOOL_CALLS:
                     budget_hit = True
-                    break
+                if budget_hit:
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": call.id,
+                            "content": "Error: the tool budget for this turn is exhausted; this call was not executed.",
+                        }
+                    )
+                    continue
                 key = f"{call.name}:{canonical_arguments(call.arguments)}"
                 if key in executed_keys:
-                    trace.append(TraceEntry(tool=call.name, status="duplicate"))
+                    trace.append(TraceEntry(tool=call.name, status=ToolStatus.DUPLICATE))
                     messages.append(
                         {
                             "role": "tool",
@@ -112,29 +133,29 @@ class HotelAgent:
                         }
                     )
                     continue
-                payload, status = await execute_agent_tool(call.name, call.arguments, session, self._retriever)
+                result = await execute_agent_tool(call.name, call.arguments, session, self._retriever)
                 executed_keys.add(key)
                 executed_count += 1
-                trace.append(TraceEntry(tool=call.name, status=status))
-                if status == "ok":
-                    comparison = self._collect(call.name, payload, hotels, sources) or comparison
+                trace.append(TraceEntry(tool=call.name, status=result.status))
+                if result.status is ToolStatus.OK:
+                    comparison = self._collect(call.name, result.payload, hotels, sources) or comparison
                     messages.append(
                         {
                             "role": "tool",
                             "tool_call_id": call.id,
-                            "content": json.dumps(payload, ensure_ascii=False),
+                            "content": json.dumps(result.payload, ensure_ascii=False),
                         }
                     )
                 else:
-                    messages.append({"role": "tool", "tool_call_id": call.id, "content": payload})
+                    messages.append({"role": "tool", "tool_call_id": call.id, "content": result.payload})
             if budget_hit:
+                outcome = TurnOutcome.BUDGET_EXHAUSTED
                 break
 
         if final_message is None:
-            stopped_early = True
             final_message = await self._force_summary(messages)
         else:
-            stopped_early = False
+            outcome = TurnOutcome.ANSWERED
 
         return AgentTurnResult(
             message=final_message,
@@ -143,7 +164,7 @@ class HotelAgent:
             conversation_id=conversation_id,
             sources=list(sources.values()),
             comparison=comparison,
-            stopped_early=stopped_early,
+            outcome=outcome,
         )
 
     def _tool_specs(self) -> list[dict]:

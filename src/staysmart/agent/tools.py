@@ -1,7 +1,10 @@
 import json
+from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from staysmart.app.mcp_client import ToolFailureError
+from staysmart.rag.models import Category
 from staysmart.rag.service import RagRetriever
 
 HOTEL_TOOLS = frozenset(
@@ -24,14 +27,32 @@ AMENITY_VALUES = [
     "SHUTTLE",
 ]
 
-KNOWLEDGE_CATEGORIES = [
-    "general",
-    "rooms",
-    "amenities",
-    "cancellation",
-    "pet_policy",
-    "check_in_check_out",
-]
+KNOWLEDGE_CATEGORIES = [category.value for category in Category]
+
+
+class ToolStatus(str, Enum):
+    OK = "ok"
+    ERROR = "error"
+    DUPLICATE = "duplicate"
+
+
+@dataclass(frozen=True)
+class ToolOutcome:
+    status: ToolStatus
+    payload: Any
+
+    @classmethod
+    def ok(cls, payload: dict[str, Any]) -> "ToolOutcome":
+        if not isinstance(payload, dict):
+            raise TypeError("ok outcomes require a dict payload")
+        return cls(ToolStatus.OK, payload)
+
+    @classmethod
+    def error(cls, message: str) -> "ToolOutcome":
+        if not isinstance(message, str):
+            raise TypeError("error outcomes require a string message")
+        return cls(ToolStatus.ERROR, message)
+
 
 AGENT_TOOLS: list[dict] = [
     {
@@ -168,20 +189,20 @@ async def execute_agent_tool(
     arguments: dict[str, Any],
     session: Any,
     retriever: RagRetriever,
-) -> tuple[Any, str]:
+) -> ToolOutcome:
     if not isinstance(arguments, dict):
-        return "Error: tool arguments must be an object.", "error"
+        return ToolOutcome.error("Error: tool arguments must be an object.")
     if name not in AGENT_TOOL_NAMES:
-        return f"Error: unknown tool {name!r}.", "error"
+        return ToolOutcome.error(f"Error: unknown tool {name!r}.")
     if name == KNOWLEDGE_TOOL:
         return await _run_knowledge(arguments, retriever)
     return await _run_hotel_tool(name, arguments, session)
 
 
-async def _run_knowledge(arguments: dict[str, Any], retriever: RagRetriever) -> tuple[Any, str]:
+async def _run_knowledge(arguments: dict[str, Any], retriever: RagRetriever) -> ToolOutcome:
     query = arguments.get("query")
     if not isinstance(query, str) or not query.strip():
-        return "Error: search_knowledge requires a non-empty query.", "error"
+        return ToolOutcome.error("Error: search_knowledge requires a non-empty query.")
     bundle = retriever.build_context(
         query,
         hotel_id=arguments.get("hotel_id") or None,
@@ -192,19 +213,19 @@ async def _run_knowledge(arguments: dict[str, Any], retriever: RagRetriever) -> 
         "formatted_context": bundle.formatted_context,
         "sources": [source.model_dump() for source in bundle.sources],
     }
-    return payload, "ok"
+    return ToolOutcome.ok(payload)
 
 
-async def _run_hotel_tool(name: str, arguments: dict[str, Any], session: Any) -> tuple[Any, str]:
+async def _run_hotel_tool(name: str, arguments: dict[str, Any], session: Any) -> ToolOutcome:
     try:
         payload = await session.call_tool(name, arguments)
     except ToolFailureError as exc:
-        return f"Error: {exc.message}", "error"
+        return ToolOutcome.error(f"Error: {exc.message}")
     except Exception as exc:  # noqa: BLE001 - transport failures become tool feedback
-        return f"Error: MCP session unavailable ({type(exc).__name__}).", "error"
+        return ToolOutcome.error(f"Error: MCP session unavailable ({type(exc).__name__}).")
     if not isinstance(payload, dict):
-        return "Error: tool returned no structured payload.", "error"
-    return payload, "ok"
+        return ToolOutcome.error("Error: tool returned no structured payload.")
+    return ToolOutcome.ok(payload)
 
 
 def canonical_arguments(arguments: dict[str, Any]) -> str:

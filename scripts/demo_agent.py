@@ -90,7 +90,7 @@ async def run() -> dict:
                 "hotel_ids": hotel_ids(result),
                 "sources": source_records(result),
                 "comparison": result.comparison,
-                "stopped_early": result.stopped_early,
+                "outcome": result.outcome.value,
             }
 
     return {
