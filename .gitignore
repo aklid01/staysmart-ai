@@ -1,6 +1,5 @@
 AGENTS.md
 docs/
-.workbuddy-ai/
 .venv/
 __pycache__/
 *.py[cod]
