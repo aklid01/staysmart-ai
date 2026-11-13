@@ -44,22 +44,22 @@ uv run pytest                           # 191 tests, fully offline paths include
 
 Copy `.env.example` to `.env` to override any of these.
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `HOTEL_PROVIDER` | `mock` | Provider implementation selector. Only `mock` exists. |
-| `STAYSMART_DATASET_PATH` | bundled `data/hotels/v1/hotels.json` | Override the mock dataset |
-| `STAYSMART_LOG_LEVEL` | `INFO` | Python logging level for the `staysmart` logger |
-| `STAYSMART_CURRENCY` | `USD` | Expected currency; must match the dataset currency |
-| `STAYSMART_WINDOW_DAYS` | `365` | Caps the booking horizon from the dataset anchor date |
-| `STAYSMART_HTTP_HOST` | `127.0.0.1` | Bind address for the HTTP application service |
-| `STAYSMART_HTTP_PORT` | `8000` | Port for the HTTP application service |
-| `STAYSMART_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated browser origins allowed by CORS |
-| `STAYSMART_RAG_CORPUS_PATH` | bundled `data/knowledge/v1` | Knowledge corpus directory |
-| `STAYSMART_RAG_INDEX_PATH` | `data/rag/index` | Generated vector index directory (gitignored) |
-| `STAYSMART_RAG_MODEL` | `BAAI/bge-small-en-v1.5` | FastEmbed model used for embeddings |
-| `LLM_BASE_URL` | `http://127.0.0.1:3425/v1` | OpenAI-compatible endpoint for the chat agent |
-| `LLM_API_KEY` | empty | API key; the default local endpoint needs none |
-| `LLM_MODEL` | `auto/glm-5.3-flash` | Model id as the endpoint lists it |
+| Variable                    | Default                                       | Meaning                                               |
+| --------------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| `HOTEL_PROVIDER`            | `mock`                                        | Provider implementation selector. Only `mock` exists. |
+| `STAYSMART_DATASET_PATH`    | bundled `data/hotels/v1/hotels.json`          | Override the mock dataset                             |
+| `STAYSMART_LOG_LEVEL`       | `INFO`                                        | Python logging level for the `staysmart` logger       |
+| `STAYSMART_CURRENCY`        | `USD`                                         | Expected currency; must match the dataset currency    |
+| `STAYSMART_WINDOW_DAYS`     | `365`                                         | Caps the booking horizon from the dataset anchor date |
+| `STAYSMART_HTTP_HOST`       | `127.0.0.1`                                   | Bind address for the HTTP application service         |
+| `STAYSMART_HTTP_PORT`       | `8000`                                        | Port for the HTTP application service                 |
+| `STAYSMART_CORS_ORIGINS`    | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated browser origins allowed by CORS       |
+| `STAYSMART_RAG_CORPUS_PATH` | bundled `data/knowledge/v1`                   | Knowledge corpus directory                            |
+| `STAYSMART_RAG_INDEX_PATH`  | `data/rag/index`                              | Generated vector index directory (gitignored)         |
+| `STAYSMART_RAG_MODEL`       | `BAAI/bge-small-en-v1.5`                      | FastEmbed model used for embeddings                   |
+| `LLM_BASE_URL`              | `http://127.0.0.1:3425/v1`                    | OpenAI-compatible endpoint for the chat agent         |
+| `LLM_API_KEY`               | empty                                         | API key; the default local endpoint needs none        |
+| `LLM_MODEL`                 | `auto/glm-5.3-flash`                          | Model id as the endpoint lists it                     |
 
 ## Layout
 
