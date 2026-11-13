@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from staysmart.rag.corpus import corpus_fingerprint
 from staysmart.rag.embedder import Embedder
 from staysmart.rag.errors import RagError
 from staysmart.rag.index import VectorIndex
@@ -12,8 +13,26 @@ class RagRetriever:
         self._embedder = embedder
 
     @classmethod
-    def load(cls, index_path: Path, embedder: Embedder) -> "RagRetriever":
-        return cls(VectorIndex.load(index_path), embedder)
+    def load(cls, index_path: Path, embedder: Embedder, *, corpus_path: Path | None = None) -> "RagRetriever":
+        index = VectorIndex.load(index_path)
+        manifest = index.manifest
+        if manifest is None:
+            raise RagError(f"vector index at {index_path} has no manifest; run 'python -m staysmart.rag ingest' again")
+        if manifest.model_name != embedder.model_id:
+            raise RagError(
+                f"index was built with embedding model {manifest.model_name!r} but the configured embedder is "
+                f"{embedder.model_id!r}; run 'python -m staysmart.rag ingest' again"
+            )
+        if manifest.dim != embedder.dim:
+            raise RagError(
+                f"index dim {manifest.dim} does not match embedder dim {embedder.dim}; "
+                "run 'python -m staysmart.rag ingest' again"
+            )
+        if corpus_path is not None and corpus_fingerprint(corpus_path) != manifest.corpus_hash:
+            raise RagError(
+                "knowledge corpus changed since the index was built; run 'python -m staysmart.rag ingest' again"
+            )
+        return cls(index, embedder)
 
     def retrieve(
         self,

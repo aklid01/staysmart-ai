@@ -61,9 +61,9 @@ def test_build_context_truncates_at_chunk_boundaries(retriever):
     assert len(bundle.chunks) < 4
 
 
-def test_persisted_index_reloads_for_retrieval(stub_index, tmp_path):
+def test_persisted_index_reloads_for_retrieval(stub_index, tmp_path, corpus_path):
     embedder = DeterministicEmbedder()
-    loaded = RagRetriever.load(tmp_path / "index", embedder)
+    loaded = RagRetriever.load(tmp_path / "index", embedder, corpus_path=corpus_path)
 
     results = loaded.retrieve("dogs at the townhouse", hotel_id="hotel-kyo-01", top_k=2)
 
@@ -72,9 +72,57 @@ def test_persisted_index_reloads_for_retrieval(stub_index, tmp_path):
     assert [r.chunk.chunk_id for r in results] == [r.chunk.chunk_id for r in direct]
 
 
+def test_load_with_mismatched_embedder_dim_raises(stub_index, tmp_path):
+    class NarrowEmbedder(DeterministicEmbedder):
+        DIM = 32
+
+    with pytest.raises(RagError, match="dim"):
+        RagRetriever.load(tmp_path / "index", NarrowEmbedder())
+
+
+def test_load_with_mismatched_embedder_model_raises(stub_index, tmp_path):
+    class RenamedEmbedder(DeterministicEmbedder):
+        model_id = "other-embedder-v1"
+
+    with pytest.raises(RagError, match="embedding model"):
+        RagRetriever.load(tmp_path / "index", RenamedEmbedder())
+
+
 def test_ingest_into_empty_corpus_fails(tmp_path):
     empty = tmp_path / "corpus"
     empty.mkdir()
 
     with pytest.raises(RagError, match="no documents"):
-        build_index(empty, tmp_path / "index", DeterministicEmbedder())
+        build_index(empty, tmp_path / "index", DeterministicEmbedder(), destination_by_hotel={})
+
+
+def write_stray_hotel_doc(corpus, title, body):
+    (corpus / "general.md").write_text(
+        f"---\ndoc_id: stray-hotel-doc\ncategory: general\ntitle: {title}\n"
+        f"hotel_id: hotel-zzz-99\n---\n\n## Section\n\n{body}\n",
+        encoding="utf-8",
+    )
+
+
+def test_ingest_with_unmapped_hotel_document_fails(tmp_path):
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    write_stray_hotel_doc(corpus, "Stray", "Body.")
+
+    with pytest.raises(RagError, match="dataset mapping"):
+        build_index(
+            corpus, tmp_path / "index", DeterministicEmbedder(), destination_by_hotel={"hotel-aaa-01": "kyoto-jp"}
+        )
+
+
+def test_load_detects_stale_corpus(tmp_path):
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    write_stray_hotel_doc(corpus, "Stray", "Body.")
+    embedder = DeterministicEmbedder()
+    build_index(corpus, tmp_path / "index", embedder, destination_by_hotel={"hotel-zzz-99": "kyoto-jp"})
+
+    write_stray_hotel_doc(corpus, "Changed", "Changed body.")
+
+    with pytest.raises(RagError, match="corpus changed"):
+        RagRetriever.load(tmp_path / "index", embedder, corpus_path=corpus)

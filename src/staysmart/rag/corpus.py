@@ -1,19 +1,23 @@
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
 from staysmart.rag.errors import RagError
+from staysmart.rag.models import Category
 
 CATEGORY_BY_FILENAME = {
-    "general.md": "general",
-    "rooms.md": "rooms",
-    "amenities.md": "amenities",
-    "cancellation.md": "cancellation",
-    "pet-policy.md": "pet_policy",
-    "check-in-check-out.md": "check_in_check_out",
+    "general.md": Category.GENERAL,
+    "rooms.md": Category.ROOMS,
+    "amenities.md": Category.AMENITIES,
+    "cancellation.md": Category.CANCELLATION,
+    "pet-policy.md": Category.PET_POLICY,
+    "check-in-check-out.md": Category.CHECK_IN_CHECK_OUT,
 }
 
-HOTEL_CATEGORIES = frozenset({"general", "rooms", "amenities", "cancellation", "pet_policy"})
-KNOWN_CATEGORIES = frozenset(CATEGORY_BY_FILENAME.values())
+HOTEL_CATEGORIES = frozenset(
+    {Category.GENERAL, Category.ROOMS, Category.AMENITIES, Category.CANCELLATION, Category.PET_POLICY}
+)
+KNOWN_CATEGORIES = frozenset(Category)
 
 ALLOWED_KEYS = frozenset({"doc_id", "category", "title", "hotel_id", "destination_id"})
 
@@ -21,7 +25,7 @@ ALLOWED_KEYS = frozenset({"doc_id", "category", "title", "hotel_id", "destinatio
 @dataclass(frozen=True)
 class KnowledgeDocument:
     doc_id: str
-    category: str
+    category: Category
     title: str
     hotel_id: str | None
     destination_id: str | None
@@ -85,7 +89,7 @@ def load_corpus(corpus_path: Path) -> list[KnowledgeDocument]:
         filename = path.name
         if filename not in CATEGORY_BY_FILENAME:
             raise RagError(f"{relative}: unrecognized knowledge document name")
-        if fields["category"] != CATEGORY_BY_FILENAME[filename]:
+        if fields["category"] != CATEGORY_BY_FILENAME[filename].value:
             raise RagError(f"{relative}: category {fields['category']!r} does not match file name {filename!r}")
         if fields["doc_id"] in seen:
             raise RagError(f"{relative}: duplicate doc_id {fields['doc_id']!r}")
@@ -94,7 +98,7 @@ def load_corpus(corpus_path: Path) -> list[KnowledgeDocument]:
         documents.append(
             KnowledgeDocument(
                 doc_id=fields["doc_id"],
-                category=fields["category"],
+                category=Category(fields["category"]),
                 title=fields["title"],
                 hotel_id=fields.get("hotel_id") or None,
                 destination_id=fields.get("destination_id") or None,
@@ -103,3 +107,15 @@ def load_corpus(corpus_path: Path) -> list[KnowledgeDocument]:
             )
         )
     return documents
+
+
+def corpus_fingerprint(corpus_path: Path) -> str:
+    if not corpus_path.is_dir():
+        raise RagError(f"knowledge corpus path not found: {corpus_path}")
+    digest = hashlib.sha256()
+    for path in sorted(p for p in corpus_path.rglob("*.md") if p.is_file()):
+        digest.update(path.relative_to(corpus_path).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()

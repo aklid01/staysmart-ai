@@ -3,9 +3,20 @@ import pytest
 
 from staysmart.rag.embedder import DeterministicEmbedder
 from staysmart.rag.errors import RagError
-from staysmart.rag.index import VectorIndex
+from staysmart.rag.index import IndexManifest, VectorIndex
 
 DIM = DeterministicEmbedder.DIM
+
+
+def write_manifest(index_path, *, chunk_count, dim=DIM, model_name="test-model", corpus_hash="test-hash"):
+    manifest = IndexManifest(
+        schema_version=1,
+        model_name=model_name,
+        dim=dim,
+        chunk_count=chunk_count,
+        corpus_hash=corpus_hash,
+    )
+    (index_path / "manifest.json").write_text(manifest.model_dump_json(), encoding="utf-8")
 
 
 def test_save_and_load_round_trip_is_exact(stub_index, tmp_path):
@@ -13,6 +24,8 @@ def test_save_and_load_round_trip_is_exact(stub_index, tmp_path):
 
     assert reloaded.chunk_count == stub_index.chunk_count
     assert reloaded.dim == stub_index.dim
+    assert reloaded.manifest is not None
+    assert reloaded.manifest.model_name == "deterministic-hash-v1"
     assert np.allclose(reloaded.vectors, stub_index.vectors, atol=1e-6)
     assert [chunk.chunk_id for chunk in reloaded.chunks] == [chunk.chunk_id for chunk in stub_index.chunks]
 
@@ -22,13 +35,35 @@ def test_load_missing_index_raises(tmp_path):
         VectorIndex.load(tmp_path / "missing")
 
 
+def test_load_without_manifest_raises(tmp_path):
+    index_path = tmp_path / "unmanifested"
+    index_path.mkdir()
+    np.save(index_path / "vectors.npy", np.zeros((1, DIM), dtype=np.float32))
+    (index_path / "chunks.json").write_text("[]", encoding="utf-8")
+
+    with pytest.raises(RagError, match="manifest"):
+        VectorIndex.load(index_path)
+
+
 def test_load_with_mismatched_counts_raises(tmp_path):
     index_path = tmp_path / "broken"
     index_path.mkdir()
     np.save(index_path / "vectors.npy", np.zeros((2, DIM), dtype=np.float32))
     (index_path / "chunks.json").write_text("[]", encoding="utf-8")
+    write_manifest(index_path, chunk_count=2)
 
     with pytest.raises(RagError, match="mismatch"):
+        VectorIndex.load(index_path)
+
+
+def test_load_with_corrupt_chunks_raises(tmp_path):
+    index_path = tmp_path / "corrupt"
+    index_path.mkdir()
+    np.save(index_path / "vectors.npy", np.zeros((1, DIM), dtype=np.float32))
+    (index_path / "chunks.json").write_text("{not json", encoding="utf-8")
+    write_manifest(index_path, chunk_count=1)
+
+    with pytest.raises(RagError, match="unreadable"):
         VectorIndex.load(index_path)
 
 

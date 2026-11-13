@@ -4,11 +4,18 @@ from typing import Protocol
 
 import numpy as np
 
+from staysmart.rag.errors import RagError
+
 DEFAULT_RAG_MODEL = "BAAI/bge-small-en-v1.5"
-EMBEDDING_DIM = 384
 
 
 class Embedder(Protocol):
+    @property
+    def model_id(self) -> str: ...
+
+    @property
+    def dim(self) -> int: ...
+
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]: ...
 
     def embed_query(self, text: str) -> list[float]: ...
@@ -25,12 +32,26 @@ class FastEmbedEmbedder:
     def __init__(self, model_name: str = DEFAULT_RAG_MODEL) -> None:
         self._model_name = model_name
         self._model = None
+        self._dim: int | None = None
+
+    @property
+    def model_id(self) -> str:
+        return self._model_name
+
+    @property
+    def dim(self) -> int:
+        if self._dim is None:
+            self._dim = len(self.embed_query("dimension probe"))
+        return self._dim
 
     def _ensure_model(self):
         if self._model is None:
-            from fastembed import TextEmbedding
+            try:
+                from fastembed import TextEmbedding
 
-            self._model = TextEmbedding(model_name=self._model_name)
+                self._model = TextEmbedding(model_name=self._model_name)
+            except Exception as exc:
+                raise RagError(f"failed to load embedding model {self._model_name!r}: {exc}") from exc
         return self._model
 
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
@@ -46,6 +67,11 @@ class FastEmbedEmbedder:
 
 class DeterministicEmbedder:
     DIM = 64
+    model_id = "deterministic-hash-v1"
+
+    @property
+    def dim(self) -> int:
+        return self.DIM
 
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
         return [self._embed_one(text) for text in texts]
