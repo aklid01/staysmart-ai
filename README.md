@@ -20,6 +20,8 @@ Python 3.13 and uv, pydantic v2, the official MCP Python SDK over stdio, Starlet
 ```bash
 uv sync
 uv run python -m staysmart.app
+
+> The API is unauthenticated by design and binds to 127.0.0.1 by default; the loopback address is the trust boundary. Do not expose it to public networks without adding auth.
 ```
 
 In a second terminal:
@@ -37,7 +39,7 @@ Other entry points:
 ```bash
 uv run python -m staysmart.mcp_server   # five MCP hotel tools over stdio
 uv run python -m staysmart.rag ingest   # build the vector index (free one-time model download)
-uv run pytest                           # 191 tests, fully offline paths included
+uv run pytest                           # 197 tests, fully offline paths included
 ```
 
 ## Configuration
