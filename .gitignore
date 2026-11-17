@@ -13,3 +13,5 @@ frontend/dist/
 dist/
 build/
 *.egg-info/
+.desloppify/
+scorecard.png
