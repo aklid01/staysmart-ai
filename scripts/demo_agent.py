@@ -1,19 +1,19 @@
 import asyncio
-import json
 import logging
+from typing import Any
 
+from demo_summaries import write_artifact
 from mcp import Client
 
 from staysmart.agent.agent import HotelAgent
 from staysmart.agent.llm import OpenAICompatLLM
-from staysmart.app.mcp_client import SdkMcpSession
 from staysmart.config import PROJECT_ROOT, Settings, configure_logging
+from staysmart.mcp_client import SdkMcpSession
 from staysmart.mcp_server.server import build_mcp_server
-from staysmart.providers.mock.dataset import load_dataset
-from staysmart.providers.mock.provider import get_provider
+from staysmart.providers.mock.provider import build_provider
+from staysmart.rag.bootstrap import build_project_index
 from staysmart.rag.corpus import load_corpus
 from staysmart.rag.embedder import FastEmbedEmbedder
-from staysmart.rag.ingest import build_index
 from staysmart.rag.service import RagRetriever
 
 logger = logging.getLogger("staysmart")
@@ -56,23 +56,16 @@ def source_records(result) -> list[dict]:
     ]
 
 
-async def run() -> dict:
+async def run() -> dict[str, Any]:
     settings = Settings(log_level="WARNING")
     configure_logging(settings.log_level)
 
-    dataset = load_dataset(settings.dataset_path)
-    destination_by_hotel = {hotel.hotel_id: hotel.destination_id for hotel in dataset.hotels}
     embedder = FastEmbedEmbedder(settings.rag_model)
     if not settings.rag_index_path.exists():
-        build_index(
-            settings.rag_corpus_path,
-            settings.rag_index_path,
-            embedder,
-            destination_by_hotel,
-        )
+        build_project_index(settings, embedder)
     retriever = RagRetriever.load(settings.rag_index_path, embedder)
 
-    provider = get_provider(settings)
+    provider = build_provider(settings)
     server = build_mcp_server(settings, provider)
     llm = OpenAICompatLLM(settings)
     agent = HotelAgent(llm, retriever)
@@ -106,10 +99,7 @@ async def run() -> dict:
 
 def main() -> None:
     payload = asyncio.run(run())
-    text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
-    ARTIFACT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    ARTIFACT_PATH.write_text(text, encoding="utf-8", newline="\n")
-    print(f"wrote {ARTIFACT_PATH}")
+    write_artifact(ARTIFACT_PATH, payload)
     for key, scenario in payload["scenarios"].items():
         tools = [entry["tool"] for entry in scenario["tool_trace"]]
         print(f"{key}: tools={tools} hotels={scenario['hotel_ids']}")

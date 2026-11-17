@@ -1,10 +1,10 @@
-import json
+from typing import Any
+
+from demo_summaries import write_artifact
 
 from staysmart.config import PROJECT_ROOT, Settings, configure_logging
-from staysmart.providers.mock.dataset import load_dataset
+from staysmart.rag.bootstrap import build_project_index
 from staysmart.rag.corpus import load_corpus
-from staysmart.rag.embedder import FastEmbedEmbedder
-from staysmart.rag.ingest import build_index
 from staysmart.rag.service import RagRetriever
 
 ARTIFACT_PATH = PROJECT_ROOT / "artifacts" / "rag_demo.json"
@@ -43,7 +43,7 @@ SCENARIOS = [
 ]
 
 
-def result_record(retrieved) -> dict:
+def result_record(retrieved: Any) -> dict[str, Any]:
     chunk = retrieved.chunk
     return {
         "chunk_id": chunk.chunk_id,
@@ -59,7 +59,7 @@ def result_record(retrieved) -> dict:
     }
 
 
-def source_record(source) -> dict:
+def source_record(source: Any) -> dict[str, Any]:
     return {
         "doc_id": source.doc_id,
         "title": source.title,
@@ -73,16 +73,7 @@ def source_record(source) -> dict:
 def main() -> None:
     settings = Settings(log_level="WARNING")
     configure_logging(settings.log_level)
-    dataset = load_dataset(settings.dataset_path)
-    destination_by_hotel = {hotel.hotel_id: hotel.destination_id for hotel in dataset.hotels}
-    embedder = FastEmbedEmbedder(settings.rag_model)
-
-    index = build_index(
-        settings.rag_corpus_path,
-        settings.rag_index_path,
-        embedder,
-        destination_by_hotel=destination_by_hotel,
-    )
+    index, embedder = build_project_index(settings)
     retriever = RagRetriever.load(settings.rag_index_path, embedder)
 
     queries: dict = {}
@@ -104,10 +95,7 @@ def main() -> None:
         "queries": queries,
     }
 
-    text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
-    ARTIFACT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    ARTIFACT_PATH.write_text(text, encoding="utf-8", newline="\n")
-    print(f"wrote {ARTIFACT_PATH}")
+    write_artifact(ARTIFACT_PATH, payload)
     for key, record in queries.items():
         top = record["results"][0]
         print(f"{key}: top1={top['doc_id']} score={top['score']}")
