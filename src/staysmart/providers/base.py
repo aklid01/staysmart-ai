@@ -29,4 +29,5 @@ class HotelProvider(Protocol):
         check_in: date,
         check_out: date,
         rooms: int = 1,
+        guests: int = 2,
     ) -> AvailabilityResult: ...

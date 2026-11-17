@@ -3,7 +3,7 @@ import math
 from dataclasses import replace
 from datetime import date, timedelta
 
-from staysmart.config import Settings, configure_logging
+from staysmart.config import Settings
 from staysmart.domain.errors import (
     CurrencyMismatchError,
     ProviderError,
@@ -12,7 +12,7 @@ from staysmart.domain.errors import (
     UnknownRoomTypeError,
 )
 from staysmart.domain.models import (
-    PREFERENCE_NOT_VERIFIED,
+    Amenity,
     AvailabilityResult,
     Hotel,
     HotelDetails,
@@ -21,6 +21,8 @@ from staysmart.domain.models import (
     HotelSearchResult,
     QuoteRequest,
     RoomType,
+    StayQuote,
+    unverified_preferences,
 )
 from staysmart.providers.base import HotelProvider
 from staysmart.providers.mock.dataset import MockDataset, load_dataset
@@ -39,7 +41,6 @@ def _price_key(quote_avg: float | None) -> float:
 
 class MockHotelProvider:
     def __init__(self, settings: Settings) -> None:
-        configure_logging(settings.log_level)
         self._settings = settings
         self._dataset: MockDataset = load_dataset(settings.dataset_path)
         if settings.currency.upper() != self._dataset.currency.upper():
@@ -53,8 +54,6 @@ class MockHotelProvider:
         )
 
     async def search(self, query: HotelSearchQuery) -> HotelSearchResult:
-        if not isinstance(query, HotelSearchQuery):
-            query = HotelSearchQuery.model_validate(query)
         self._validate_currency(query.currency)
         validate_date_window(query.check_in, query.check_out, self._context)
 
@@ -63,49 +62,7 @@ class MockHotelProvider:
             logger.warning("search rejected unknown destination=%s", query.destination)
             raise UnknownDestinationError(f"No destination matches {query.destination!r} in the mock dataset")
 
-        required = set(query.amenities)
-        hits: list[HotelSearchHit] = []
-        for hotel in self._dataset.hotels:
-            if hotel.destination_id not in destination_ids:
-                continue
-            if query.min_rating is not None and hotel.guest_rating < query.min_rating:
-                continue
-            if not required.issubset(set(hotel.amenities)):
-                continue
-
-            quotes = []
-            for room in hotel.room_types:
-                if room.max_occupancy * query.rooms < query.guests:
-                    continue
-                quote = self._quote(
-                    hotel,
-                    room,
-                    query.check_in,
-                    query.check_out,
-                    query.rooms,
-                    query.guests,
-                    query.currency,
-                )
-                if query.max_nightly_budget is not None and (
-                    quote.avg_nightly_rate is None or quote.avg_nightly_rate > query.max_nightly_budget
-                ):
-                    continue
-                quotes.append(quote)
-
-            if not quotes:
-                continue
-
-            best = min(
-                quotes,
-                key=lambda item: (
-                    not item.available,
-                    _price_key(item.avg_nightly_rate),
-                    item.room_type_id,
-                ),
-            )
-            matched = sorted(item.value for item in required if item in hotel.amenities)
-            hits.append(HotelSearchHit(hotel=hotel, quote=best, matched_amenities=matched))
-
+        hits = self._collect_hits(query, destination_ids)
         hits.sort(
             key=lambda hit: (
                 not hit.quote.available,
@@ -125,6 +82,63 @@ class MockHotelProvider:
             results=hits,
             total_found=len(hits),
             unmet_preferences=self._unmet_preferences(query, hits),
+        )
+
+    def _collect_hits(self, query: HotelSearchQuery, destination_ids: set[str]) -> list[HotelSearchHit]:
+        required = set(query.amenities)
+        hits: list[HotelSearchHit] = []
+        for hotel in self._dataset.hotels:
+            if not self._matches_filters(hotel, query, destination_ids, required):
+                continue
+            best = self._best_quote(hotel, query)
+            if best is None:
+                continue
+            matched = sorted(item.value for item in required if item in hotel.amenities)
+            hits.append(HotelSearchHit(hotel=hotel, quote=best, matched_amenities=matched))
+        return hits
+
+    @staticmethod
+    def _matches_filters(
+        hotel: Hotel,
+        query: HotelSearchQuery,
+        destination_ids: set[str],
+        required: set[Amenity],
+    ) -> bool:
+        if hotel.destination_id not in destination_ids:
+            return False
+        if query.min_rating is not None and hotel.guest_rating < query.min_rating:
+            return False
+        return required.issubset(set(hotel.amenities))
+
+    def _best_quote(self, hotel: Hotel, query: HotelSearchQuery) -> StayQuote | None:
+        quotes = []
+        for room in hotel.room_types:
+            if room.max_occupancy * query.rooms < query.guests:
+                continue
+            quote = self._quote(
+                hotel,
+                room,
+                query.check_in,
+                query.check_out,
+                query.rooms,
+                query.guests,
+                query.currency,
+            )
+            if query.max_nightly_budget is not None and (
+                quote.avg_nightly_rate is None or quote.avg_nightly_rate > query.max_nightly_budget
+            ):
+                continue
+            quotes.append(quote)
+
+        if not quotes:
+            return None
+        return min(
+            quotes,
+            key=lambda item: (
+                not item.available,
+                _price_key(item.avg_nightly_rate),
+                item.room_type_id,
+            ),
         )
 
     async def get_hotel_details(
@@ -163,6 +177,7 @@ class MockHotelProvider:
         check_in: date,
         check_out: date,
         rooms: int = 1,
+        guests: int = 2,
     ) -> AvailabilityResult:
         hotel = self._hotel(hotel_id)
         room = next(
@@ -178,7 +193,7 @@ class MockHotelProvider:
             raise UnknownRoomTypeError(f"Unknown room_type_id {room_type_id!r} for hotel {hotel_id!r}")
 
         validate_date_window(check_in, check_out, self._context)
-        quote = self._quote(hotel, room, check_in, check_out, rooms, 2, self._settings.currency)
+        quote = self._quote(hotel, room, check_in, check_out, rooms, guests, self._settings.currency)
         logger.info(
             "availability hotel_id=%s room_type_id=%s nights_available=%d/%d",
             hotel_id,
@@ -260,7 +275,7 @@ class MockHotelProvider:
                 messages.append(f"filter:amenities={joined}")
             return messages
 
-        verified = " ".join(
+        verified_texts = [
             " ".join(
                 [
                     hit.hotel.name,
@@ -270,15 +285,11 @@ class MockHotelProvider:
                 ]
             )
             for hit in hits
-        ).lower()
-        return [
-            f"{PREFERENCE_NOT_VERIFIED}:{preference}"
-            for preference in query.preferences
-            if preference.strip().lower() not in verified
         ]
+        return unverified_preferences(query.preferences, verified_texts)
 
 
-def get_provider(settings: Settings) -> HotelProvider:
+def build_provider(settings: Settings) -> HotelProvider:
     if settings.hotel_provider != "mock":
         raise ProviderError(f"Unsupported hotel provider {settings.hotel_provider!r}; only 'mock' is available")
     return MockHotelProvider(settings)

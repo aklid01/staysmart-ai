@@ -6,8 +6,9 @@ from typing import Mapping
 
 from pydantic import ValidationError
 
+from staysmart.domain.base import StrictModel
 from staysmart.domain.errors import ProviderError
-from staysmart.domain.models import Destination, Hotel, StrictModel
+from staysmart.domain.models import Destination, Hotel
 from staysmart.providers.mock.inventory import InventoryContext
 
 
@@ -33,7 +34,6 @@ class MockDataset:
     destinations: tuple[Destination, ...]
     hotels: tuple[Hotel, ...]
     hotels_by_id: Mapping[str, Hotel]
-    destinations_by_id: Mapping[str, Destination]
     context: InventoryContext
 
 
@@ -46,6 +46,12 @@ def _validate_references(parsed: DatasetFile) -> None:
     if len(hotel_ids) != len(parsed.hotels):
         raise ValueError("duplicate hotel_id values in dataset")
 
+    room_keys = _validate_hotels(parsed, destination_ids)
+    _validate_sold_out_overrides(parsed, room_keys)
+    _validate_blackout_dates(parsed, destination_ids)
+
+
+def _validate_hotels(parsed: DatasetFile, destination_ids: set[str]) -> set[str]:
     room_keys: set[str] = set()
     for hotel in parsed.hotels:
         if hotel.destination_id not in destination_ids:
@@ -56,13 +62,18 @@ def _validate_references(parsed: DatasetFile) -> None:
             )
         for room in hotel.room_types:
             room_keys.add(f"{hotel.hotel_id}|{room.room_type_id}")
+    return room_keys
 
+
+def _validate_sold_out_overrides(parsed: DatasetFile, room_keys: set[str]) -> None:
     for key, values in parsed.sold_out_overrides.items():
         if key not in room_keys:
             raise ValueError(f"sold_out_overrides references unknown room type {key}")
         for value in values:
             date.fromisoformat(value)
 
+
+def _validate_blackout_dates(parsed: DatasetFile, destination_ids: set[str]) -> None:
     for destination_id, values in parsed.blackout_dates.items():
         if destination_id not in destination_ids:
             raise ValueError(f"blackout_dates references unknown destination {destination_id}")
@@ -99,6 +110,5 @@ def load_dataset(path: Path) -> MockDataset:
         destinations=tuple(parsed.destinations),
         hotels=tuple(parsed.hotels),
         hotels_by_id={hotel.hotel_id: hotel for hotel in parsed.hotels},
-        destinations_by_id={item.destination_id: item for item in parsed.destinations},
         context=context,
     )

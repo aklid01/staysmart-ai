@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from typing import Mapping
 
 from staysmart.domain.errors import InvalidDateError
-from staysmart.domain.models import MAX_STAY_NIGHTS, Hotel, QuoteRequest, RoomType, StayQuote
+from staysmart.domain.models import Hotel, QuoteRequest, RoomType, StayQuote, validate_stay_dates
 
 
 @dataclass(frozen=True)
@@ -17,11 +17,7 @@ class InventoryContext:
 
 
 def validate_date_window(check_in: date, check_out: date, context: InventoryContext) -> None:
-    nights = (check_out - check_in).days
-    if nights < 1 or nights > MAX_STAY_NIGHTS:
-        raise InvalidDateError(
-            f"Stay must be between 1 and {MAX_STAY_NIGHTS} nights, got {nights} from {check_in} to {check_out}"
-        )
+    validate_stay_dates(check_in, check_out)
 
     end_exclusive = context.anchor_date + timedelta(days=context.window_days)
     last_night = check_out - timedelta(days=1)
