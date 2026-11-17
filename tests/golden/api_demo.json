@@ -28,8 +28,8 @@
     "empty_compare_hotel_ids": {
       "body": {
         "error": {
-          "code": "empty_hotel_ids",
-          "error_type": "ToolError",
+          "code": "invalid_argument",
+          "error_type": "InvalidArgumentError",
           "message": "hotel_ids must contain at least one hotel id"
         }
       },
@@ -42,7 +42,7 @@
         "error": {
           "code": "invalid_date",
           "error_type": "InvalidDateError",
-          "message": "Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04"
+          "message": "check_out must be after check_in"
         }
       },
       "method": "POST",

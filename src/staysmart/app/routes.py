@@ -9,15 +9,10 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
-from staysmart.agent.agent import HotelAgent
 from staysmart.app.errors import ApiError, classify_tool_failure, invalid_json_error, unavailable_error
-from staysmart.app.mcp_client import ToolFailureError
 from staysmart.config import Settings
 from staysmart.domain.models import Amenity
-from staysmart.mcp_server.server import SERVER_NAME
-from staysmart.rag.embedder import FastEmbedEmbedder
-from staysmart.rag.errors import RagError
-from staysmart.rag.service import RagRetriever
+from staysmart.mcp_client import ToolFailureError
 
 logger = logging.getLogger("staysmart")
 
@@ -50,6 +45,7 @@ class AvailabilityRequest(_RequestModel):
     check_in: date
     check_out: date
     rooms: int = Field(default=1, ge=1)
+    guests: int = Field(default=2, ge=1)
 
 
 class CompareRequest(_RequestModel):
@@ -119,7 +115,7 @@ async def health(request: Request) -> JSONResponse:
         body = {
             **base,
             "status": "degraded",
-            "mcp_server": {"name": SERVER_NAME, "connected": False, "tools": []},
+            "mcp_server": {"name": request.app.state.server_name, "connected": False, "tools": []},
             "error": {
                 "code": "mcp_unavailable",
                 "message": f"{type(exc).__name__} while listing MCP tools",
@@ -130,7 +126,7 @@ async def health(request: Request) -> JSONResponse:
     body = {
         **base,
         "status": "ok",
-        "mcp_server": {"name": SERVER_NAME, "connected": True, "tools": tools},
+        "mcp_server": {"name": request.app.state.server_name, "connected": True, "tools": tools},
     }
     return JSONResponse(body)
 
@@ -155,7 +151,7 @@ async def hotel_policies(request: Request) -> JSONResponse:
     return JSONResponse(result)
 
 
-async def check_availability(request: Request) -> JSONResponse:
+async def hotel_availability(request: Request) -> JSONResponse:
     payload = await _json_model(request, AvailabilityRequest)
     arguments = {"hotel_id": request.path_params["hotel_id"], **payload.model_dump(mode="json")}
     result = await _call_tool(request.app.state.mcp, "check_availability", arguments)
@@ -170,7 +166,14 @@ async def compare_hotels(request: Request) -> JSONResponse:
 
 async def chat(request: Request) -> JSONResponse:
     payload = await _json_model(request, ChatRequest)
-    agent = _get_agent(request)
+    agent = request.app.state.agent
+    if agent is None:
+        raise ApiError(
+            503,
+            "rag_unavailable",
+            "The RAG index is not available. Run 'python -m staysmart.rag ingest' first.",
+            "RagUnavailableError",
+        )
     result = await agent.run(
         payload.message,
         history=[entry.model_dump() for entry in payload.history],
@@ -180,34 +183,11 @@ async def chat(request: Request) -> JSONResponse:
     return JSONResponse(result.model_dump(mode="json"))
 
 
-def _get_agent(request: Request) -> HotelAgent:
-    app = request.app
-    agent = getattr(app.state, "agent", None)
-    if agent is not None:
-        return agent
-    if app.state.retriever is None:
-        try:
-            app.state.retriever = RagRetriever.load(
-                app.state.settings.rag_index_path,
-                FastEmbedEmbedder(app.state.settings.rag_model),
-                corpus_path=app.state.settings.rag_corpus_path,
-            )
-        except RagError as exc:
-            raise ApiError(
-                503,
-                "rag_unavailable",
-                f"{exc.message} Run 'python -m staysmart.rag ingest' first.",
-                "RagUnavailableError",
-            ) from exc
-    app.state.agent = HotelAgent(app.state.llm, app.state.retriever)
-    return app.state.agent
-
-
 def register_routes(app: Starlette) -> None:
     app.routes.append(Route("/api/health", health, methods=["GET"]))
     app.routes.append(Route("/api/search", search_hotels, methods=["POST"]))
     app.routes.append(Route("/api/hotels/{hotel_id}", hotel_details, methods=["GET"]))
     app.routes.append(Route("/api/hotels/{hotel_id}/policies", hotel_policies, methods=["GET"]))
-    app.routes.append(Route("/api/hotels/{hotel_id}/availability", check_availability, methods=["POST"]))
+    app.routes.append(Route("/api/hotels/{hotel_id}/availability", hotel_availability, methods=["POST"]))
     app.routes.append(Route("/api/compare", compare_hotels, methods=["POST"]))
     app.routes.append(Route("/api/chat", chat, methods=["POST"]))

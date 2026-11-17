@@ -1,11 +1,13 @@
 import functools
+from collections.abc import Awaitable, Callable
 from datetime import date
+from typing import Any, ParamSpec
 
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.mcpserver.server import MCPServer
 
 from staysmart.config import Settings
-from staysmart.domain.errors import InvalidDateError, StaySmartError
+from staysmart.domain.errors import InvalidArgumentError, StaySmartError
 from staysmart.domain.models import (
     Amenity,
     AvailabilityResult,
@@ -14,29 +16,24 @@ from staysmart.domain.models import (
     HotelPolicyInfo,
     HotelSearchQuery,
     HotelSearchResult,
-    validate_stay_window,
+    validate_stay_dates,
 )
 from staysmart.providers.base import HotelProvider
 from staysmart.services import comparison as comparison_service
 from staysmart.services import policies as policies_service
 
+P = ParamSpec("P")
 
-def tool_errors(fn):
+
+def tool_errors(fn: Callable[P, Awaitable[Any]]) -> Callable[P, Awaitable[Any]]:
     @functools.wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs):
         try:
             return await fn(*args, **kwargs)
         except StaySmartError as exc:
             raise ToolError(f"{exc.code}: {exc.message}") from exc
 
     return wrapper
-
-
-def validate_stay_dates(check_in: date, check_out: date) -> None:
-    try:
-        validate_stay_window(check_in, check_out)
-    except ValueError as exc:
-        raise InvalidDateError(str(exc)) from exc
 
 
 def register_tools(server: MCPServer, settings: Settings, provider: HotelProvider) -> None:
@@ -50,8 +47,8 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
         rooms: int = 1,
         max_nightly_budget: float | None = None,
         min_rating: float | None = None,
-        amenities: list[Amenity] = [],
-        preferences: list[str] = [],
+        amenities: list[Amenity] | None = None,
+        preferences: list[str] | None = None,
     ) -> HotelSearchResult:
         """Search hotels in a destination for a stay.
 
@@ -69,8 +66,8 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
             rooms=rooms,
             max_nightly_budget=max_nightly_budget,
             min_rating=min_rating,
-            amenities=amenities,
-            preferences=preferences,
+            amenities=amenities or [],
+            preferences=preferences or [],
             currency=settings.currency,
         )
         return await provider.search(query)
@@ -106,6 +103,7 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
         check_in: date,
         check_out: date,
         rooms: int = 1,
+        guests: int = 2,
     ) -> AvailabilityResult:
         """Check per-night availability and pricing for one room type over a date range.
 
@@ -113,7 +111,9 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
         invented total price. Raises an error result for unknown hotel or room type ids and invalid
         dates.
         """
-        return await provider.check_availability(hotel_id, room_type_id, check_in, check_out, rooms=rooms)
+        return await provider.check_availability(
+            hotel_id, room_type_id, check_in, check_out, rooms=rooms, guests=guests
+        )
 
     @server.tool()
     @tool_errors
@@ -123,7 +123,7 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
         check_out: date,
         rooms: int = 1,
         guests: int = 2,
-        preferences: list[str] = [],
+        preferences: list[str] | None = None,
     ) -> HotelComparison:
         """Compare several hotels side by side for the same stay.
 
@@ -132,7 +132,7 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
         Raises an error result for invalid date ranges.
         """
         if not hotel_ids:
-            raise ToolError("hotel_ids must contain at least one hotel id")
+            raise InvalidArgumentError("hotel_ids must contain at least one hotel id")
         return await comparison_service.compare_hotels(
             provider,
             hotel_ids=hotel_ids,
@@ -140,7 +140,7 @@ def register_tools(server: MCPServer, settings: Settings, provider: HotelProvide
             check_out=check_out,
             rooms=rooms,
             guests=guests,
-            preferences=preferences,
+            preferences=preferences or [],
             currency=settings.currency,
         )
 

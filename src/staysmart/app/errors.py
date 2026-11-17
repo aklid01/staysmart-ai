@@ -42,22 +42,12 @@ class ApiError(Exception):
         return {"error": error}
 
 
-_TOOL_FAILURE_MAP: tuple[tuple[str, int, str, str], ...] = (
-    ("No destination matches", 404, "unknown_destination", "UnknownDestinationError"),
-    ("Unknown hotel_id", 404, "unknown_hotel", "UnknownHotelError"),
-    ("Unknown room_type_id", 404, "unknown_room_type", "UnknownRoomTypeError"),
-    ("hotel_ids must contain at least one hotel id", 400, "empty_hotel_ids", "ToolError"),
-    ("check_out must be after check_in", 400, "invalid_date", "InvalidDateError"),
-    ("Stay must be between 1 and", 400, "invalid_date", "InvalidDateError"),
-    ("stay length must be between 1 and", 400, "invalid_date", "InvalidDateError"),
-    ("outside the mock dataset window", 400, "invalid_date", "InvalidDateError"),
-)
-
 _TOOL_CODE_MAP: dict[str, tuple[int, str]] = {
     "unknown_destination": (404, "UnknownDestinationError"),
     "unknown_hotel": (404, "UnknownHotelError"),
     "unknown_room_type": (404, "UnknownRoomTypeError"),
     "invalid_date": (400, "InvalidDateError"),
+    "invalid_argument": (400, "InvalidArgumentError"),
     "currency_mismatch": (502, "CurrencyMismatchError"),
     "provider_error": (502, "ProviderError"),
 }
@@ -67,9 +57,6 @@ def classify_tool_failure(message: str, code: str | None = None) -> ApiError:
     if code is not None and code in _TOOL_CODE_MAP:
         status_code, error_type = _TOOL_CODE_MAP[code]
         return ApiError(status_code, code, message, error_type)
-    for fragment, status_code, code, error_type in _TOOL_FAILURE_MAP:
-        if fragment in message:
-            return ApiError(status_code, code, message, error_type)
     return ApiError(502, "tool_error", message, "ToolError")
 
 

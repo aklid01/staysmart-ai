@@ -2,24 +2,17 @@ import logging
 from datetime import date
 from typing import Sequence
 
-from staysmart.domain.errors import CurrencyMismatchError, InvalidDateError, UnknownHotelError
+from staysmart.domain.errors import CurrencyMismatchError, UnknownHotelError
 from staysmart.domain.models import (
-    PREFERENCE_NOT_VERIFIED,
     ComparisonRow,
     HotelComparison,
     HotelDetails,
-    validate_stay_window,
+    unverified_preferences,
+    validate_stay_dates,
 )
 from staysmart.providers.base import HotelProvider
 
 logger = logging.getLogger("staysmart")
-
-
-def _validate_stay_length(check_in: date, check_out: date) -> None:
-    try:
-        validate_stay_window(check_in, check_out)
-    except ValueError as exc:
-        raise InvalidDateError(str(exc)) from exc
 
 
 def _verified_text(details: HotelDetails) -> str:
@@ -53,15 +46,6 @@ def _row(details: HotelDetails) -> ComparisonRow:
     )
 
 
-def _unmet_preferences(preferences: Sequence[str], verified_texts: list[str]) -> list[str]:
-    verified = " ".join(verified_texts)
-    return [
-        f"{PREFERENCE_NOT_VERIFIED}:{preference}"
-        for preference in preferences
-        if preference.strip().lower() not in verified
-    ]
-
-
 async def compare_hotels(
     provider: HotelProvider,
     *,
@@ -73,7 +57,7 @@ async def compare_hotels(
     preferences: Sequence[str] = (),
     currency: str = "USD",
 ) -> HotelComparison:
-    _validate_stay_length(check_in, check_out)
+    validate_stay_dates(check_in, check_out)
     unique_ids = list(dict.fromkeys(hotel_ids))
 
     resolved: list[HotelDetails] = []
@@ -116,5 +100,5 @@ async def compare_hotels(
         rooms=rooms,
         guests=guests,
         currency=currency,
-        unmet_preferences=_unmet_preferences(preferences, verified_texts),
+        unmet_preferences=unverified_preferences(preferences, verified_texts),
     )
