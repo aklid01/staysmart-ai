@@ -1,0 +1,223 @@
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.hotel-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: fade-in 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-image {
+  height: 88px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.card-initial {
+  font-size: 34px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  margin-left: 16px;
+}
+
+.card-destination {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-mock {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #92400e;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.card-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.card-head h3 {
+  margin: 0;
+  font-size: 15.5px;
+}
+
+.card-ratings {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.stars {
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.guest-rating {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.card-location {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.card-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.amenity-row {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.amenity-chip {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.amenity-more {
+  background: transparent;
+  color: var(--ink-muted);
+  border-color: var(--border);
+}
+
+.price-block {
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.price-line {
+  font-size: 14px;
+}
+
+.price-line strong {
+  font-size: 16px;
+}
+
+.price-line.muted {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.price-line.unavailable {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.card-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.policy-badge {
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.policy-badge.free {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.policy-badge.flexible {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.policy-badge.partial {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.policy-badge.non_refundable {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: #fecaca;
+}
+
+.card-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.card-buttons button,
+.composer button {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.card-buttons button:hover,
+.composer button:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.composer button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

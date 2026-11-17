@@ -1,0 +1,28 @@
+.composer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 4px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.composer textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14.5px;
+  background: var(--surface-card);
+}
+
+.composer textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+.composer button {
+  align-self: stretch;
+  min-width: 76px;
+}
