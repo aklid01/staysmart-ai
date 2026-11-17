@@ -39,7 +39,7 @@ Other entry points:
 ```bash
 uv run python -m staysmart.mcp_server   # five MCP hotel tools over stdio
 uv run python -m staysmart.rag ingest   # build the vector index (free one-time model download)
-uv run pytest                           # 197 tests, fully offline paths included
+uv run pytest                           # 217 tests, fully offline paths included
 ```
 
 ## Configuration

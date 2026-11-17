@@ -14,6 +14,8 @@ npm run format:check # check formatting without writing
 npm test             # run Playwright E2E tests (starts backend + dev server)
 ```
 
+One-time setup for the E2E runner: `npx playwright install chromium`.
+
 E2E tests live in `e2e/` and run against a scripted-LLM backend harness
 (`scripts/e2e_backend.py`), so they are deterministic and need no external LLM.
 Artifacts (results JSON, screenshots, failure traces) are written to
