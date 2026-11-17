@@ -23,9 +23,9 @@ class RagRetriever:
                 f"index was built with embedding model {manifest.model_name!r} but the configured embedder is "
                 f"{embedder.model_id!r}; run 'python -m staysmart.rag ingest' again"
             )
-        if manifest.dim != embedder.dim:
+        if manifest.dim != embedder.dim():
             raise RagError(
-                f"index dim {manifest.dim} does not match embedder dim {embedder.dim}; "
+                f"index dim {manifest.dim} does not match embedder dim {embedder.dim()}; "
                 "run 'python -m staysmart.rag ingest' again"
             )
         if corpus_path is not None and corpus_fingerprint(corpus_path) != manifest.corpus_hash:

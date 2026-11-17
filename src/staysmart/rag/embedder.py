@@ -4,16 +4,14 @@ from typing import Protocol
 
 import numpy as np
 
+from staysmart.config import DEFAULT_RAG_MODEL
 from staysmart.rag.errors import RagError
-
-DEFAULT_RAG_MODEL = "BAAI/bge-small-en-v1.5"
 
 
 class Embedder(Protocol):
     @property
     def model_id(self) -> str: ...
 
-    @property
     def dim(self) -> int: ...
 
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]: ...
@@ -38,7 +36,6 @@ class FastEmbedEmbedder:
     def model_id(self) -> str:
         return self._model_name
 
-    @property
     def dim(self) -> int:
         if self._dim is None:
             self._dim = len(self.embed_query("dimension probe"))
@@ -69,7 +66,6 @@ class DeterministicEmbedder:
     DIM = 64
     model_id = "deterministic-hash-v1"
 
-    @property
     def dim(self) -> int:
         return self.DIM
 

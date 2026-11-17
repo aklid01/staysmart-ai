@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import Field
 
-from staysmart.domain.models import StrictModel
+from staysmart.domain.base import StrictModel
 
 
 class Category(str, Enum):

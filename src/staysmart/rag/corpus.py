@@ -34,6 +34,13 @@ class KnowledgeDocument:
 
 
 def parse_frontmatter(text: str, source: str) -> dict[str, str]:
+    fields = _parse_frontmatter_fields(text, source)
+    _validate_frontmatter_keys(fields, source)
+    _validate_frontmatter_scope(fields, source)
+    return fields
+
+
+def _parse_frontmatter_fields(text: str, source: str) -> dict[str, str]:
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         raise RagError(f"{source}: document must start with a frontmatter block (---)")
@@ -51,7 +58,10 @@ def parse_frontmatter(text: str, source: str) -> dict[str, str]:
         if not separator:
             raise RagError(f"{source}: malformed frontmatter line {stripped!r}")
         fields[key.strip()] = value.strip()
+    return fields
 
+
+def _validate_frontmatter_keys(fields: dict[str, str], source: str) -> None:
     unknown = sorted(set(fields) - ALLOWED_KEYS)
     if unknown:
         raise RagError(f"{source}: unknown frontmatter keys {', '.join(unknown)}")
@@ -61,6 +71,8 @@ def parse_frontmatter(text: str, source: str) -> dict[str, str]:
     if fields["category"] not in KNOWN_CATEGORIES:
         raise RagError(f"{source}: unknown category {fields['category']!r}")
 
+
+def _validate_frontmatter_scope(fields: dict[str, str], source: str) -> None:
     hotel_id = fields.get("hotel_id") or None
     destination_id = fields.get("destination_id") or None
     if fields["category"] in HOTEL_CATEGORIES:
@@ -73,7 +85,6 @@ def parse_frontmatter(text: str, source: str) -> dict[str, str]:
             raise RagError(f"{source}: destination documents require destination_id")
         if hotel_id:
             raise RagError(f"{source}: destination documents must not carry hotel_id")
-    return fields
 
 
 def load_corpus(corpus_path: Path) -> list[KnowledgeDocument]:
@@ -83,7 +94,10 @@ def load_corpus(corpus_path: Path) -> list[KnowledgeDocument]:
     documents: list[KnowledgeDocument] = []
     seen: set[str] = set()
     for path in files:
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise RagError(f"{path.relative_to(corpus_path).as_posix()}: unreadable document ({exc})") from exc
         relative = path.relative_to(corpus_path).as_posix()
         fields = parse_frontmatter(text, relative)
         filename = path.name
@@ -116,6 +130,9 @@ def corpus_fingerprint(corpus_path: Path) -> str:
     for path in sorted(p for p in corpus_path.rglob("*.md") if p.is_file()):
         digest.update(path.relative_to(corpus_path).as_posix().encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        try:
+            digest.update(path.read_bytes())
+        except OSError as exc:
+            raise RagError(f"{path.relative_to(corpus_path).as_posix()}: unreadable document ({exc})") from exc
         digest.update(b"\0")
     return digest.hexdigest()
