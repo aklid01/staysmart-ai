@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -7,6 +8,8 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpe
 
 from staysmart.agent.errors import LLMUnavailableError
 from staysmart.config import Settings
+
+logger = logging.getLogger("staysmart")
 
 
 @dataclass(frozen=True)

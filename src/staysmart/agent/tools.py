@@ -1,9 +1,11 @@
+import asyncio
 import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from staysmart.app.mcp_client import ToolFailureError
+from staysmart.domain.models import Amenity
+from staysmart.mcp_client import McpSession, ToolFailureError
 from staysmart.rag.models import Category
 from staysmart.rag.service import RagRetriever
 
@@ -14,18 +16,7 @@ HOTEL_TOOLS = frozenset(
 KNOWLEDGE_TOOL = "search_knowledge"
 AGENT_TOOL_NAMES = HOTEL_TOOLS | {KNOWLEDGE_TOOL}
 
-AMENITY_VALUES = [
-    "WIFI",
-    "POOL",
-    "GYM",
-    "BREAKFAST",
-    "PARKING",
-    "SPA",
-    "PET_FRIENDLY",
-    "AIR_CONDITIONING",
-    "RESTAURANT",
-    "SHUTTLE",
-]
+AMENITY_VALUES = [amenity.value for amenity in Amenity]
 
 KNOWLEDGE_CATEGORIES = [category.value for category in Category]
 
@@ -39,7 +30,7 @@ class ToolStatus(str, Enum):
 @dataclass(frozen=True)
 class ToolOutcome:
     status: ToolStatus
-    payload: Any
+    payload: dict[str, Any] | str
 
     @classmethod
     def ok(cls, payload: dict[str, Any]) -> "ToolOutcome":
@@ -118,6 +109,7 @@ AGENT_TOOLS: list[dict] = [
                     "check_in": {"type": "string", "description": "ISO date"},
                     "check_out": {"type": "string", "description": "ISO date"},
                     "rooms": {"type": "integer", "default": 1},
+                    "guests": {"type": "integer", "default": 2},
                 },
                 "required": ["hotel_id", "room_type_id", "check_in", "check_out"],
             },
@@ -187,7 +179,7 @@ AGENT_TOOLS: list[dict] = [
 async def execute_agent_tool(
     name: str,
     arguments: dict[str, Any],
-    session: Any,
+    session: McpSession,
     retriever: RagRetriever,
 ) -> ToolOutcome:
     if not isinstance(arguments, dict):
@@ -203,7 +195,8 @@ async def _run_knowledge(arguments: dict[str, Any], retriever: RagRetriever) -> 
     query = arguments.get("query")
     if not isinstance(query, str) or not query.strip():
         return ToolOutcome.error("Error: search_knowledge requires a non-empty query.")
-    bundle = retriever.build_context(
+    bundle = await asyncio.to_thread(
+        retriever.build_context,
         query,
         hotel_id=arguments.get("hotel_id") or None,
         destination_id=arguments.get("destination_id") or None,
@@ -216,14 +209,14 @@ async def _run_knowledge(arguments: dict[str, Any], retriever: RagRetriever) -> 
     return ToolOutcome.ok(payload)
 
 
-async def _run_hotel_tool(name: str, arguments: dict[str, Any], session: Any) -> ToolOutcome:
+async def _run_hotel_tool(name: str, arguments: dict[str, Any], session: McpSession) -> ToolOutcome:
     try:
         payload = await session.call_tool(name, arguments)
     except ToolFailureError as exc:
         return ToolOutcome.error(f"Error: {exc.message}")
     except Exception as exc:  # noqa: BLE001 - transport failures become tool feedback
         return ToolOutcome.error(f"Error: MCP session unavailable ({type(exc).__name__}).")
-    if not isinstance(payload, dict):
+    if payload is None or not isinstance(payload, dict):
         return ToolOutcome.error("Error: tool returned no structured payload.")
     return ToolOutcome.ok(payload)
 
