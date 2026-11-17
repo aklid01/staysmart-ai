@@ -3,7 +3,7 @@ from starlette.testclient import TestClient
 from staysmart.agent.errors import LLMUnavailableError
 from staysmart.agent.llm import LLMCompletion, LLMToolCall, ScriptedLLM
 from staysmart.app.main import create_app
-from staysmart.app.mcp_client import InProcessMcpConnector
+from staysmart.mcp_client import InProcessMcpConnector
 
 
 def test_chat_returns_structured_response(client, agent_llm):

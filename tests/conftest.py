@@ -5,8 +5,8 @@ from starlette.testclient import TestClient
 
 from staysmart.agent.llm import ScriptedLLM
 from staysmart.app.main import create_app
-from staysmart.app.mcp_client import InProcessMcpConnector
 from staysmart.config import Settings
+from staysmart.mcp_client import InProcessMcpConnector
 from staysmart.mcp_server.server import build_mcp_server
 from staysmart.providers.mock.dataset import load_dataset
 from staysmart.providers.mock.provider import MockHotelProvider

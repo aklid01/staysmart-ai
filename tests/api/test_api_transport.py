@@ -1,7 +1,7 @@
 from starlette.testclient import TestClient
 
 from staysmart.app.main import create_app
-from staysmart.app.mcp_client import StdioMcpConnector
+from staysmart.mcp_client import StdioMcpConnector
 
 SEARCH_BODY = {
     "destination": "Kyoto",

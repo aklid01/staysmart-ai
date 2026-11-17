@@ -40,10 +40,10 @@ def test_every_dataset_hotel_has_five_docs_and_every_destination_one(corpus_path
 
     assert set(by_hotel) == {hotel.hotel_id for hotel in dataset.hotels}
     assert set(by_destination) == {destination.destination_id for destination in dataset.destinations}
-    for hotel_id, categories in by_hotel.items():
+    for categories in by_hotel.values():
         assert set(categories) == HOTEL_CATEGORIES
         assert len(categories) == 5
-    for destination_id, categories in by_destination.items():
+    for categories in by_destination.values():
         assert set(categories) == DESTINATION_CATEGORIES
 
 

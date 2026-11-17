@@ -3,7 +3,7 @@ from pathlib import Path
 
 from mcp import Client, StdioServerParameters
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 TOOL_NAMES = {
     "search_hotels",

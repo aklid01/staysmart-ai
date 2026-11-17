@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 GOLDEN_PATH = ROOT / "tests" / "golden" / "provider_demo.json"
 ARTIFACT_PATH = ROOT / "artifacts" / "provider_demo.json"
 DEMO_SCRIPT = ROOT / "scripts" / "demo_provider.py"

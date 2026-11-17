@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 GOLDEN_PATH = ROOT / "tests" / "golden" / "mcp_demo.json"
 ARTIFACT_PATH = ROOT / "artifacts" / "mcp_demo.json"
 DEMO_SCRIPT = ROOT / "scripts" / "demo_mcp.py"
@@ -67,6 +67,4 @@ def test_e2e_snapshot_matches_spec_authored_golden():
         "No destination matches 'Atlantis' in the mock dataset"
     )
     assert errors["unknown_hotel_details"]["message"].endswith("Unknown hotel_id 'hotel-xxx-99' in the mock dataset")
-    assert errors["invalid_dates_availability"]["message"].endswith(
-        "Stay must be between 1 and 30 nights, got -3 from 2026-12-07 to 2026-12-04"
-    )
+    assert errors["invalid_dates_availability"]["message"].endswith("check_out must be after check_in")

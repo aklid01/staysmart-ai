@@ -8,13 +8,13 @@ from staysmart.rag.index import IndexManifest, VectorIndex
 DIM = DeterministicEmbedder.DIM
 
 
-def write_manifest(index_path, *, chunk_count, dim=DIM, model_name="test-model", corpus_hash="test-hash"):
+def write_manifest(index_path, *, chunk_count):
     manifest = IndexManifest(
         schema_version=1,
-        model_name=model_name,
-        dim=dim,
+        model_name="test-model",
+        dim=DIM,
         chunk_count=chunk_count,
-        corpus_hash=corpus_hash,
+        corpus_hash="test-hash",
     )
     (index_path / "manifest.json").write_text(manifest.model_dump_json(), encoding="utf-8")
 

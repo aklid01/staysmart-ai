@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 ARTIFACT_PATH = ROOT / "artifacts" / "agent_demo.json"
 DEMO_SCRIPT = ROOT / "scripts" / "demo_agent.py"
 

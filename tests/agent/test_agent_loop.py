@@ -6,7 +6,7 @@ from mcp import Client
 from staysmart.agent.agent import HotelAgent, TurnOutcome
 from staysmart.agent.llm import LLMCompletion, LLMToolCall, ScriptedLLM
 from staysmart.agent.tools import ToolStatus
-from staysmart.app.mcp_client import SdkMcpSession
+from staysmart.mcp_client import SdkMcpSession
 
 KYOTO_SEARCH_ARGS = {
     "destination": "Kyoto",
