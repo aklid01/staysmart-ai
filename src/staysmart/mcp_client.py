@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import logging
 import re
 import sys
 from collections.abc import AsyncIterator, Callable
@@ -11,6 +12,8 @@ from mcp.server.mcpserver.server import MCPServer
 
 from staysmart.config import PROJECT_ROOT, Settings
 from staysmart.domain.errors import ERRORS_BY_CODE
+
+logger = logging.getLogger("staysmart")
 
 _CODE_PREFIX = re.compile(r"^([a-z][a-z0-9_]*):\s")
 T = TypeVar("T")
@@ -26,7 +29,7 @@ class ToolFailureError(Exception):
 class McpSession(Protocol):
     async def list_tools(self) -> list[str]: ...
 
-    async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]: ...
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any] | None: ...
 
 
 class McpConnector(Protocol):
@@ -66,7 +69,8 @@ class ReconnectingMcpSession:
         async with self._lock:
             if self._session is None:
                 await self._connect()
-            assert self._session is not None
+            if self._session is None:
+                raise RuntimeError("MCP session failed to connect")
             return self._session
 
     async def _dispatch(self, operation: Callable[[McpSession], Any]) -> Any:
@@ -75,7 +79,8 @@ class ReconnectingMcpSession:
             return await operation(session)
         except ToolFailureError:
             raise
-        except Exception:
+        except Exception as exc:
+            logger.warning("MCP session call failed (%s: %s); reconnecting once", type(exc).__name__, exc)
             await self.close()
             session = await self._acquire()
             return await operation(session)
@@ -89,7 +94,7 @@ class SdkMcpSession:
         listing = await self._client.list_tools()
         return sorted(tool.name for tool in listing.tools)
 
-    async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    async def call_tool(self, name: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
         result = await self._client.call_tool(name, arguments)
         if result.is_error:
             raise _parse_tool_failure(result.content[0].text)
