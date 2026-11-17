@@ -19,6 +19,9 @@ from staysmart.agent.llm import LLMCompletion, ScriptedLLM
 from staysmart.app.main import APP_NAME, create_app
 from staysmart.config import PROJECT_ROOT, Settings, configure_logging
 from staysmart.mcp_server.server import SERVER_NAME
+from staysmart.rag.bootstrap import build_project_index
+from staysmart.rag.embedder import FastEmbedEmbedder
+from staysmart.rag.service import RagRetriever
 
 ARTIFACT_PATH = PROJECT_ROOT / "artifacts" / "api_demo.json"
 STAY_DATES = {"check_in": "2026-12-04", "check_out": "2026-12-07"}
@@ -71,7 +74,11 @@ async def run() -> dict[str, Any]:
             )
         ]
     )
-    app = create_app(settings, llm=llm)
+    embedder = FastEmbedEmbedder(settings.rag_model)
+    if not settings.rag_index_path.exists():
+        build_project_index(settings, embedder)
+    retriever = RagRetriever.load(settings.rag_index_path, embedder, corpus_path=settings.rag_corpus_path)
+    app = create_app(settings, llm=llm, retriever=retriever)
 
     server, thread, port = start_server(app)
     try:

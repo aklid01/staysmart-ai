@@ -6,6 +6,9 @@ from staysmart.agent.errors import LLMUnavailableError
 from staysmart.agent.llm import LLMCompletion, LLMToolCall, ScriptedLLM
 from staysmart.app.main import create_app
 from staysmart.config import Settings, configure_logging
+from staysmart.rag.bootstrap import build_project_index
+from staysmart.rag.embedder import FastEmbedEmbedder
+from staysmart.rag.service import RagRetriever
 
 STAY = {"check_in": "2026-12-04", "check_out": "2026-12-07"}
 
@@ -108,7 +111,11 @@ def main() -> None:
             LLMCompletion(content=FINAL_ANSWER, tool_calls=[]),
         ]
     )
-    app = create_app(settings, llm=llm)
+    embedder = FastEmbedEmbedder(settings.rag_model)
+    if not settings.rag_index_path.exists():
+        build_project_index(settings, embedder)
+    retriever = RagRetriever.load(settings.rag_index_path, embedder, corpus_path=settings.rag_corpus_path)
+    app = create_app(settings, llm=llm, retriever=retriever)
     uvicorn.run(app, host="127.0.0.1", port=settings.http_port, log_level="warning")
 
 
