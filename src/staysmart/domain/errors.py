@@ -36,6 +36,14 @@ class ProviderError(StaySmartError):
     code = "provider_error"
 
 
+class ConfigError(StaySmartError):
+    code = "config_error"
+
+
+class InvalidArgumentError(StaySmartError):
+    code = "invalid_argument"
+
+
 ERRORS_BY_CODE: dict[str, type[StaySmartError]] = {
     error.code: error
     for error in (
@@ -45,5 +53,6 @@ ERRORS_BY_CODE: dict[str, type[StaySmartError]] = {
         UnknownRoomTypeError,
         CurrencyMismatchError,
         ProviderError,
+        InvalidArgumentError,
     )
 }
