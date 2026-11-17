@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from staysmart.domain.models import StrictModel
+from staysmart.domain.base import StrictModel
 from staysmart.rag.errors import RagError
 from staysmart.rag.models import KnowledgeChunk
 

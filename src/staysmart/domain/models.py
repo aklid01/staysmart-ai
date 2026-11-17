@@ -1,15 +1,23 @@
 from datetime import date
 from enum import Enum
-from typing import Literal
+from typing import Literal, Sequence
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import Field, model_validator
+
+from staysmart.domain.base import StrictModel
+from staysmart.domain.errors import InvalidDateError
 
 MAX_STAY_NIGHTS = 30
 PREFERENCE_NOT_VERIFIED = "preference_not_verified"
 
 
-class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+def unverified_preferences(preferences: Sequence[str], verified_texts: list[str]) -> list[str]:
+    verified = " ".join(verified_texts).lower()
+    return [
+        f"{PREFERENCE_NOT_VERIFIED}:{preference}"
+        for preference in preferences
+        if preference.strip().lower() not in verified
+    ]
 
 
 class Amenity(str, Enum):
@@ -233,3 +241,10 @@ def validate_stay_window(check_in: date, check_out: date) -> None:
         raise ValueError("check_out must be after check_in")
     if nights > MAX_STAY_NIGHTS:
         raise ValueError(f"stay length must be between 1 and {MAX_STAY_NIGHTS} nights")
+
+
+def validate_stay_dates(check_in: date, check_out: date) -> None:
+    try:
+        validate_stay_window(check_in, check_out)
+    except ValueError as exc:
+        raise InvalidDateError(str(exc)) from exc
