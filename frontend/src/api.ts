@@ -1,13 +1,17 @@
-import type { ChatResponse, HealthResponse, HotelDetailsPayload, PolicyInfo } from './types'
+import type {
+  ChatResponse,
+  HealthResponse,
+  HistoryEntry,
+  HotelDetailsPayload,
+  PolicyInfo,
+} from './types'
 
 export class ApiError extends Error {
   code: string
-  status: number
 
-  constructor(code: string, message: string, status: number) {
+  constructor(code: string, message: string) {
     super(message)
     this.code = code
-    this.status = status
   }
 }
 
@@ -19,7 +23,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(
       'network_error',
       'Cannot reach the StaySmart API. Is the backend running on port 8000?',
-      0,
     )
   }
   if (!response.ok) {
@@ -34,9 +37,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // keep defaults for non-JSON error bodies
     }
-    throw new ApiError(code, message, response.status)
+    throw new ApiError(code, message)
   }
-  return (await response.json()) as T
+  try {
+    return (await response.json()) as T
+  } catch {
+    throw new ApiError('malformed_response', `Request to ${path} returned a malformed JSON body`)
+  }
 }
 
 export function getHealth(): Promise<HealthResponse> {
@@ -46,7 +53,7 @@ export function getHealth(): Promise<HealthResponse> {
 export interface ChatRequestBody {
   message: string
   conversation_id: string
-  history: { role: 'user' | 'assistant'; content: string }[]
+  history: HistoryEntry[]
 }
 
 export function postChat(body: ChatRequestBody): Promise<ChatResponse> {

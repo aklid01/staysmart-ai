@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { ApiError, getHotelDetails, getHotelPolicies } from '../api'
+import { useEffect, useMemo, useRef } from 'react'
+import { getHotelDetails, getHotelPolicies } from '../api'
 import type { HotelDetailsPayload, HotelEntry, PolicyInfo } from '../types'
 import { isSearchHit } from '../types'
+import { useDialogResource } from '../hooks/useDialogResource'
 
 const FOCUSABLE_SELECTOR =
   'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
@@ -78,6 +79,14 @@ function DialogShell({
   )
 }
 
+function DialogErrorBanner({ code, message }: { code: string; message: string }) {
+  return (
+    <p className="error-banner" role="alert">
+      [{code}] {message}
+    </p>
+  )
+}
+
 function roomOf(entry: HotelEntry, roomTypeId: string) {
   return entry.hotel.room_types.find((roomType) => roomType.room_type_id === roomTypeId)
 }
@@ -95,30 +104,15 @@ export function DetailsDialog({ entry, onClose }: { entry: HotelEntry; onClose: 
         : undefined,
     [entry],
   )
-  const [details, setDetails] = useState<HotelDetailsPayload | null>(null)
-  const [error, setError] = useState<ApiError | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getHotelDetails(hotel.hotel_id, stay)
-      .then((payload) => {
-        if (!cancelled) setDetails(payload)
-      })
-      .catch((exc: ApiError) => {
-        if (!cancelled) setError(exc)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [hotel.hotel_id, stay])
+  const stayKey = stay ? `${stay.check_in}|${stay.check_out}` : 'anchor'
+  const { payload: details, error } = useDialogResource<HotelDetailsPayload>(
+    `${hotel.hotel_id}|${stayKey}`,
+    () => getHotelDetails(hotel.hotel_id, stay),
+  )
 
   return (
     <DialogShell title={`${hotel.name} - details`} onClose={onClose}>
-      {error && (
-        <p className="error-banner">
-          [{error.code}] {error.message}
-        </p>
-      )}
+      {error && <DialogErrorBanner code={error.code} message={error.message} />}
       {!error && !details && <p className="loading-row">Loading details...</p>}
       {details && (
         <>
@@ -178,30 +172,13 @@ export function DetailsDialog({ entry, onClose }: { entry: HotelEntry; onClose: 
 }
 
 export function PolicyDialog({ hotelId, onClose }: { hotelId: string; onClose: () => void }) {
-  const [policy, setPolicy] = useState<PolicyInfo | null>(null)
-  const [error, setError] = useState<ApiError | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getHotelPolicies(hotelId)
-      .then((payload) => {
-        if (!cancelled) setPolicy(payload)
-      })
-      .catch((exc: ApiError) => {
-        if (!cancelled) setError(exc)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [hotelId])
+  const { payload: policy, error } = useDialogResource<PolicyInfo>(hotelId, () =>
+    getHotelPolicies(hotelId),
+  )
 
   return (
     <DialogShell title={`Policies - ${policy?.hotel_name ?? hotelId}`} onClose={onClose}>
-      {error && (
-        <p className="error-banner">
-          [{error.code}] {error.message}
-        </p>
-      )}
+      {error && <DialogErrorBanner code={error.code} message={error.message} />}
       {!error && !policy && <p className="loading-row">Loading policies...</p>}
       {policy && (
         <>

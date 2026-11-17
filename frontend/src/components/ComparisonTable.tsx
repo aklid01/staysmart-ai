@@ -1,7 +1,5 @@
 import type { HotelComparison } from '../types'
-
-const money = (value: number | null, currency: string) =>
-  value == null ? 'not available' : `${value.toFixed(2)} ${currency}`
+import { moneyOrText } from '../format'
 
 export function ComparisonTable({ comparison }: { comparison: HotelComparison }) {
   return (
@@ -27,8 +25,8 @@ export function ComparisonTable({ comparison }: { comparison: HotelComparison })
             {comparison.rows.map((row) => (
               <tr key={row.hotel_id}>
                 <td>{row.name}</td>
-                <td>{money(row.nightly_price, comparison.currency)}</td>
-                <td>{money(row.total_stay_price, comparison.currency)}</td>
+                <td>{moneyOrText(row.nightly_price, comparison.currency, 'not available')}</td>
+                <td>{moneyOrText(row.total_stay_price, comparison.currency, 'not available')}</td>
                 <td>{row.guest_rating.toFixed(1)}</td>
                 <td>{row.location}</td>
                 <td>

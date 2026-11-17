@@ -1,5 +1,7 @@
+export type PolicyType = 'free' | 'flexible' | 'partial' | 'non_refundable'
+
 export interface CancellationPolicy {
-  policy_type: string
+  policy_type: PolicyType
   refundable: boolean
   free_cancellation_days: number
   penalty_nights: number
@@ -110,9 +112,11 @@ export interface ContextSource {
   destination_id: string | null
 }
 
+export type ToolStatus = 'ok' | 'error' | 'duplicate'
+
 export interface ToolTraceEntry {
   tool: string
-  status: string
+  status: ToolStatus
 }
 
 export type TurnOutcome = 'answered' | 'budget_exhausted' | 'turns_exhausted'
@@ -129,6 +133,11 @@ export interface ChatResponse {
 
 export type TurnStatus = 'sent' | 'failed'
 
+export interface HistoryEntry {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface ChatTurn {
   role: 'user' | 'assistant'
   content: string
@@ -142,7 +151,7 @@ export interface PolicyInfo {
   general_info: string
   cancellation_policy: CancellationPolicy
   pet_policy: string
-  pet_policy_source: string
+  pet_policy_source: 'amenities' | 'not_provided'
   check_in_time: string | null
   check_out_time: string | null
   information_gaps: string[]
@@ -151,7 +160,7 @@ export interface PolicyInfo {
 }
 
 export interface HealthResponse {
-  status: string
+  status: 'ok' | 'degraded'
   service: string
   version: string
   provider: string

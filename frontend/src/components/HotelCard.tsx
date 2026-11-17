@@ -1,44 +1,32 @@
-import type { Hotel, HotelEntry } from '../types'
+import type { HotelEntry } from '../types'
 import { isSearchHit } from '../types'
 import { amenityLabel } from '../amenities'
+import { money } from '../format'
+import { NEUTRAL_GRADIENT, themeFor } from '../theme'
 
-const DESTINATION_THEMES: { match: string; gradient: string; label: string }[] = [
-  { match: 'lis', gradient: 'linear-gradient(135deg, #0f766e 0%, #f59e0b 100%)', label: 'Lisbon' },
-  { match: 'kyo', gradient: 'linear-gradient(135deg, #b91c1c 0%, #f472b6 100%)', label: 'Kyoto' },
-  {
-    match: 'van',
-    gradient: 'linear-gradient(135deg, #1d4ed8 0%, #10b981 100%)',
-    label: 'Vancouver',
-  },
-]
-
-function themeFor(hotel: Hotel) {
-  return (
-    DESTINATION_THEMES.find((theme) => hotel.hotel_id.includes(theme.match)) ??
-    DESTINATION_THEMES[0]
-  )
-}
-
-interface CardProps {
+export function HotelCard({
+  entry,
+  onDetails,
+  onPolicies,
+}: {
   entry: HotelEntry
   onDetails: (entry: HotelEntry) => void
   onPolicies: (hotelId: string) => void
-}
-
-export function HotelCard({ entry, onDetails, onPolicies }: CardProps) {
+}) {
   const hotel = entry.hotel
   const theme = themeFor(hotel)
   const quote = isSearchHit(entry) ? entry.quote : null
   const amenities = hotel.amenities.slice(0, 4)
   const extraAmenities = hotel.amenities.length - amenities.length
-  const money = (value: number | null | undefined) =>
-    value == null ? null : `${value.toFixed(2)} ${hotel.currency}`
+  const baseRate = hotel.room_types.length
+    ? money(Math.min(...hotel.room_types.map((room) => room.base_nightly_rate)), hotel.currency)
+    : null
 
   return (
     <article className="hotel-card" data-hotel-id={hotel.hotel_id}>
-      <div className="card-image" style={{ background: theme.gradient }}>
+      <div className="card-image" style={{ background: theme?.gradient ?? NEUTRAL_GRADIENT }}>
         <span className="card-initial">{hotel.name.charAt(0)}</span>
-        <span className="card-destination">{theme.label}</span>
+        {theme && <span className="card-destination">{theme.label}</span>}
         <span
           className="card-mock"
           title={`data_source=${hotel.data_source}, is_live=${String(hotel.is_live)}`}
@@ -73,11 +61,11 @@ export function HotelCard({ entry, onDetails, onPolicies }: CardProps) {
             {quote.available ? (
               <>
                 <span className="price-line">
-                  <strong>{money(quote.avg_nightly_rate)}</strong> avg / night
+                  <strong>{money(quote.avg_nightly_rate, hotel.currency)}</strong> avg / night
                 </span>
                 {quote.total_price != null && (
                   <span className="price-line muted">
-                    {money(quote.total_price)} total · {quote.nights} nights
+                    {money(quote.total_price, hotel.currency)} total · {quote.nights} nights
                   </span>
                 )}
               </>
@@ -91,8 +79,8 @@ export function HotelCard({ entry, onDetails, onPolicies }: CardProps) {
         ) : (
           <div className="price-block">
             <span className="price-line muted">
-              {hotel.room_types.length} room type{hotel.room_types.length === 1 ? '' : 's'} · from{' '}
-              {money(Math.min(...hotel.room_types.map((room) => room.base_nightly_rate)))} base rate
+              {hotel.room_types.length} room type{hotel.room_types.length === 1 ? '' : 's'}
+              {baseRate && ` · from ${baseRate} base rate`}
             </span>
           </div>
         )}
